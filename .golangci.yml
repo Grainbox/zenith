@@ -1,11 +1,54 @@
 version: 2
-
 run:
   timeout: 5m
   modules-download-mode: readonly
   concurrency: 4
 
 linters:
-  default: all
-  disable:
-    - wsl
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - revive
+    - gosec
+    - goconst
+    - prealloc
+    - unconvert
+    - misspell
+    - asciicheck
+    - bidichk
+    - durationcheck
+    - forcetypeassert
+    - makezero
+    - nilnil
+    - noctx
+    - predeclared
+    - tparallel
+    - unparam
+    - usestdlibvars
+    - whitespace
+    - gocritic
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disableStutteringCheck
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+  goconst:
+    min-len: 2
+    min-occurrences: 3
+  misspell:
+    locale: US
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

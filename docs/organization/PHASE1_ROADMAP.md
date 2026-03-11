@@ -61,13 +61,13 @@
         *   Code in `/internal/ingestor/server.go`.
         *   Update `/cmd/zenith/main.go` to start the gRPC server.
         *   Structured logs (e.g., via `slog`) confirming the server start.
-	*   **Status:** 🚧 In Progress
+	*   **Status:** ✅ Completed
 
 *   **[Issue-202] Signal Handling (Graceful Shutdown - Basic)**
     *   **Description:** Implement OS signal listening (SIGINT, SIGTERM) to cleanly stop the gRPC server, allowing in-flight requests to complete (crucial for resilience).
     *   **Deliverables:**
         *   Code in `main.go` using `os/signal` to intercept stop signals and call `server.GracefulStop()`.
-	*   **Status:** 🚧 In Progress
+	*   **Status:** ✅ Completed
 
 *   **[Issue-203] `IngestEvent` Handler Implementation (Ping)**
     *   **Description:** Code the basic logic in the handler to receive the event, log it (console/slog) as "ping received", and send back a success response (Ack).

@@ -1,7 +1,11 @@
 # Mac OS X files
 .DS_Store
 
+# VSCode files
+.vscode
+
 # Binaries for programs and plugins
+bin/
 *.exe
 *.exe~
 *.dll
