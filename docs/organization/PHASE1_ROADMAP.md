@@ -31,18 +31,21 @@
         *   `/api/proto/v1/event.proto` directory/file.
         *   `Event` message definition (ID, Source, Timestamp, JSON/Bytes Payload).
         *   `IngestorService` service definition with an `IngestEvent` method.
+	*   **Status:** ✅ Completed
 
 *   **[Issue-104] Go Code Generation from Protobuf**
     *   **Description:** Configure `protoc` (or `buf`) to automatically compile `.proto` files into Go code usable by the application.
     *   **Deliverables:**
         *   Bash script, `Makefile`, or `buf.yaml` configuration to automate generation.
         *   Generated Go code (e.g., under `/pkg/pb/v1/`).
+	*   **Status:** 🚧 In Progress
 
 *   **[Issue-105] [CKAD] Local Kubernetes Environment Setup**
     *   **Description:** Install and configure `minikube` or `kind` on the local development machine for future Kubernetes experiments.
     *   **Deliverables:**
         *   CLI tools (`kubectl`, `minikube` / `kind`) installed and functional.
         *   Ability to start and stop a local cluster.
+	*   **Status:** 🚧 In Progress
 
 ---
 
@@ -58,22 +61,26 @@
         *   Code in `/internal/ingestor/server.go`.
         *   Update `/cmd/zenith/main.go` to start the gRPC server.
         *   Structured logs (e.g., via `slog`) confirming the server start.
+	*   **Status:** 🚧 In Progress
 
 *   **[Issue-202] Signal Handling (Graceful Shutdown - Basic)**
     *   **Description:** Implement OS signal listening (SIGINT, SIGTERM) to cleanly stop the gRPC server, allowing in-flight requests to complete (crucial for resilience).
     *   **Deliverables:**
         *   Code in `main.go` using `os/signal` to intercept stop signals and call `server.GracefulStop()`.
+	*   **Status:** 🚧 In Progress
 
 *   **[Issue-203] `IngestEvent` Handler Implementation (Ping)**
     *   **Description:** Code the basic logic in the handler to receive the event, log it (console/slog) as "ping received", and send back a success response (Ack).
     *   **Deliverables:**
         *   Functional logic for the `IngestEvent` method.
+	*   **Status:** 🚧 In Progress
 
 *   **[Issue-204] Initial Unit Tests (Ingestor)**
     *   **Description:** Set up the `stretchr/testify` library and write the first unit test to verify that the `IngestEvent` handler correctly processes a mocked request.
     *   **Deliverables:**
         *   `testify` imported in `go.mod`.
         *   `/internal/ingestor/server_test.go` file.
+	*   **Status:** 🚧 In Progress
 
 *   **[Issue-205] [CKAD] Kubernetes Manifest Creation (Pod & Namespace)**
     *   **Description:** Create the first YAML files to deploy the application on the local cluster. Practice creating manifests without a GUI (imperative or declarative).
@@ -81,13 +88,16 @@
         *   `/deployments/k8s/local/` directory.
         *   `namespace.yaml` (e.g., `zenith-dev`).
         *   `pod.yaml` (defining a simple Pod, potentially with a temporary Docker image before full dockerization). *Note: Will require a basic `Dockerfile` (Issue-206) if we want to deploy our own code now.*
+	*   **Status:** 🚧 In Progress
 
 *   **[Issue-206] Basic Containerization (Dockerfile)**
     *   **Description:** Create a multi-stage `Dockerfile` to compile the Go application and build a lightweight image (Alpine or Scratch) containing only the executable.
     *   **Deliverables:**
         *   `build/package/Dockerfile` file.
+	*   **Status:** 🚧 In Progress
 
 *   **[Issue-207] Level 1 Final Validation (Milestone)**
     *   **Description:** End-to-end integration test locally. Start the gRPC server and use a gRPC client (like `grpcurl` or `Postman`) to send a "ping" event and verify receipt log and Ack.
     *   **Deliverables:**
         *   Demonstration (or logs) proving the "ping" is received and acknowledged by the system.
+	*   **Status:** 🚧 In Progress

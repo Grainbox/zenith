@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package zenith.v1;
+
+option go_package = "github.com/Grainbox/zenith/pkg/pb/v1";
+
+import "google/protobuf/timestamp.proto";
+
+service IngestorService {
+	rpc IngestEvent (Event) returns (IngestResponse);
+}
+
+message Event {
+	string event_id = 1;
+	string event_type = 2;
+
+	string source = 3;
+
+	bytes payload = 4;
+
+	google.protobuf.Timestamp timestamp = 5;
+}
+
+message IngestResponse {
+	bool success = 1;
+    string message = 2;
+}

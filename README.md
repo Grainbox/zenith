@@ -26,7 +26,7 @@ Zenith is composed of three primary, horizontally scalable layers:
 
 *   ✅ **Standard Go Layout:** Enforcing strict project organization.
 *   ✅ **Consultant-Grade Tooling:** Configured with rigorous linting (`golangci-lint`) and structured logging (`slog`).
-*   🚧 **gRPC Interfaces:** Defining the core `.proto` contracts for the Ingestor.
+*   ✅ **gRPC Interfaces:** Defining the core `.proto` contracts for the Ingestor.
 *   🚧 **Containerization:** Preparing Kubernetes (CKAD) ready deployments.
 
 ## 🛠 Tech Stack
