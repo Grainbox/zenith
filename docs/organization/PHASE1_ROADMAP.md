@@ -73,14 +73,14 @@
     *   **Description:** Code the basic logic in the handler to receive the event, log it (console/slog) as "ping received", and send back a success response (Ack).
     *   **Deliverables:**
         *   Functional logic for the `IngestEvent` method.
-	*   **Status:** 🚧 In Progress
+	*   **Status:** ✅ Completed
 
 *   **[Issue-204] Initial Unit Tests (Ingestor)**
     *   **Description:** Set up the `stretchr/testify` library and write the first unit test to verify that the `IngestEvent` handler correctly processes a mocked request.
     *   **Deliverables:**
         *   `testify` imported in `go.mod`.
         *   `/internal/ingestor/server_test.go` file.
-	*   **Status:** 🚧 In Progress
+	*   **Status:** ✅ Completed
 
 *   **[Issue-205] [CKAD] Kubernetes Manifest Creation (Pod & Namespace)**
     *   **Description:** Create the first YAML files to deploy the application on the local cluster. Practice creating manifests without a GUI (imperative or declarative).

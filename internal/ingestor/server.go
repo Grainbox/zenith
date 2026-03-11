@@ -3,8 +3,10 @@ package ingestor
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
+	"connectrpc.com/connect"
 	v1 "github.com/Grainbox/zenith/pkg/pb/proto/v1"
 )
 
@@ -25,9 +27,16 @@ func (s *Server) IngestEvent(
 	_ context.Context,
 	req *v1.IngestEventRequest,
 ) (*v1.IngestEventResponse, error) {
+	if req.GetEvent() == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("event is required"))
+	}
+
+	event := req.GetEvent()
+
 	s.logger.Info("Event Received",
-		"event_id", req.GetEvent().GetEventId(),
-		"type", req.GetEvent().GetEventType(),
+		"event_id", event.GetEventId(),
+		"event_type", event.GetEventType(),
+		"source", event.GetSource(),
 	)
 
 	return &v1.IngestEventResponse{
