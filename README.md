@@ -22,12 +22,17 @@ Zenith is composed of three primary, horizontally scalable layers:
 ## 🚀 Status (Current Phase)
 
 **Phase 1: Project Foundations & Architecture**
-*Currently under active development.*
+*Status: ✅ Completed.*
 
 *   ✅ **Standard Go Layout:** Enforcing strict project organization.
 *   ✅ **Consultant-Grade Tooling:** Configured with rigorous linting (`golangci-lint`) and structured logging (`slog`).
 *   ✅ **gRPC Interfaces:** Defining the core `.proto` contracts for the Ingestor.
-*   🚧 **Containerization:** Preparing Kubernetes (CKAD) ready deployments.
+*   ✅ **Containerization:** Preparing Kubernetes (CKAD) ready deployments (`kind`).
+
+**Phase 2: Persistence & Distributed Logic**
+*Currently under active development.*
+
+*   🚧 **gRPC Server:** Building the core Ingestor logic.
 
 ## 🛠 Tech Stack
 
