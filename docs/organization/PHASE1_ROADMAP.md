@@ -38,7 +38,7 @@
     *   **Deliverables:**
         *   Bash script, `Makefile`, or `buf.yaml` configuration to automate generation.
         *   Generated Go code (e.g., under `/pkg/pb/v1/`).
-	*   **Status:** 🚧 In Progress
+	*   **Status:** ✅ Completed
 
 *   **[Issue-105] [CKAD] Local Kubernetes Environment Setup**
     *   **Description:** Install and configure `minikube` or `kind` on the local development machine for future Kubernetes experiments.
