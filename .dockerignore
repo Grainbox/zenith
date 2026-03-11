@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# Go - We don't want binaries compiled on your local machine
+bin/
+*.exe
+*.test
+*.prof
+
+# Local Dependencies
+vendor/
+
+# Tests and Coverage
+coverage.txt
+coverage.out
+
+# IDEs and OS
+.vscode/
+.idea/
+.DS_Store
+
+# Documentation - unnecessary for the container
+docs/
+README.md
+CONTRIBUTING.md
+
+# Infrastructure and Deployment
+deployments/
+build/
+kind-config.yaml
+Makefile
+
+# Docker Files
+Dockerfile
+.dockerignore

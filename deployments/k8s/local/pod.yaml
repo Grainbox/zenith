@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zenith-ingestor
+spec:
+  containers:
+    - name: zenith-ingestor
+      image: zenith-ingestor:latest
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 50051
