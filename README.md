@@ -30,23 +30,28 @@ Zenith is composed of three primary, horizontally scalable layers:
 *   ✅ **Containerization:** Preparing Kubernetes (CKAD) ready deployments (`kind`).
 
 **Phase 2: Persistence & Distributed Logic**
-*Currently under active development.*
+*Status: 🚧 In Progress (Sprint 2).*
 
-*   🚧 **gRPC Server:** Building the core Ingestor logic.
+*   ✅ **gRPC Server:** Building the core Ingestor logic with ConnectRPC.
+*   ✅ **Graceful Shutdown:** Implemented OS signal handling for safe terminations.
+*   ✅ **Unit Testing:** Initial coverage established using `testify`.
+*   🚧 **Database Integration:** Preparing CockroachDB connections (Upcoming).
 
 ## 🛠 Tech Stack
 
 *   **Language:** Go 1.24+
-*   **Protocols:** gRPC & Protocol Buffers, HTTP/REST
+*   **Protocols:** gRPC & Protocol Buffers (ConnectRPC), HTTP/REST
 *   **Database:** CockroachDB Serverless
 *   **Observability:** OpenTelemetry, Prometheus, Grafana
-*   **Infrastructure:** Terraform, Kubernetes, Google Cloud Run / AWS Fargate
+*   **Infrastructure:** Terraform, Kubernetes (Kind for local dev), Docker
 
 ## 👨‍💻 Getting Started
 
 ### Prerequisites
-*   Go 1.24 or higher
+*   Go 1.24+
+*   `buf` & `protoc` plugins for code generation
 *   `golangci-lint` for local development
+*   Docker & `kind` for local Kubernetes
 
 ### Quickstart
 
@@ -56,11 +61,12 @@ git clone https://github.com/Grainbox/zenith.git
 cd zenith
 ```
 
-Run the application locally:
+Run the Ingestor Server locally:
 ```bash
-go run cmd/zenith/zenith.go
+go run cmd/ingestor/main.go
 ```
-*(Note: As we are in Phase 1, the current output simply verifies the entry point is active).*
+*The server will start on port `:50051`. You can test it using `curl` or `grpcurl`.*
+
 
 ## 🤝 Contributing
 
