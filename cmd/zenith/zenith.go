@@ -1,7 +1,10 @@
+// Package main is the entry point for the Zenith application.
 package main
 
-import "fmt"
+import (
+	"log/slog"
+)
 
 func main() {
-	fmt.Println("Zenith is starting!")
+	slog.Info("Zenith is starting!")
 }
