@@ -9,3 +9,16 @@ spec:
       imagePullPolicy: IfNotPresent
       ports:
         - containerPort: 50051
+      envFrom:
+        - configMapRef:
+            name: zenith-config
+        - secretRef:
+            name: zenith-secrets
+      volumeMounts:
+        - name: ca-cert
+          mountPath: "/root/.postgresql"
+          readOnly: true
+  volumes:
+    - name: ca-cert
+      secret:
+        secretName: zenith-ca-cert

@@ -28,4 +28,9 @@ vendor/
 pkg/pb/
 
 # Environment variables
-.env
+.env.secrets
+.env.config
+
+# Kubernetes local files
+deployments/k8s/local/config.yaml
+deployments/k8s/local/secrets.yaml

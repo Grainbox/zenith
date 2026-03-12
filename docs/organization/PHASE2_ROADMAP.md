@@ -40,10 +40,10 @@
 *   **[Issue-305] [CKAD] Kubernetes Configuration (ConfigMaps & Secrets)**
     *   **Description:** Externalize all configuration (DB URL, Port, API Keys). Learn how to inject these values into the Pods using Kubernetes resources.
     *   **Deliverables:**
-        *   `/deployments/k8s/local/configmap.yaml` for non-sensitive values.
-        *   `/deployments/k8s/local/secret.yaml` (Base64 encoded) for the CockroachDB connection string.
+        *   `/deployments/k8s/local/config.yaml` for non-sensitive values.
+        *   `/deployments/k8s/local/secrets.yaml` (Base64 encoded) for the CockroachDB connection string.
         *   Update `pod.yaml` to consume these variables.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 ---
 

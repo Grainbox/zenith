@@ -13,11 +13,11 @@ import (
 	"syscall"
 	"time"
 
+	"connectrpc.com/grpcreflect"
 	"github.com/Grainbox/zenith/internal/config"
 	"github.com/Grainbox/zenith/internal/ingestor"
 	"github.com/Grainbox/zenith/internal/storage"
 	"github.com/Grainbox/zenith/pkg/pb/proto/v1/protov1connect"
-	"connectrpc.com/grpcreflect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )

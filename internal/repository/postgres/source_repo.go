@@ -4,6 +4,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Grainbox/zenith/internal/domain"
@@ -45,7 +46,7 @@ func (r *SourceRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Source,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Or a specific ErrNotFound
+			return nil, errors.New("source not found")
 		}
 		return nil, fmt.Errorf("failed to get source by id: %w", err)
 	}
@@ -61,7 +62,7 @@ func (r *SourceRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain.So
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, errors.New("source not found")
 		}
 		return nil, fmt.Errorf("failed to get source by api key: %w", err)
 	}

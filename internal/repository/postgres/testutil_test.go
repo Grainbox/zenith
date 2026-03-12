@@ -70,12 +70,15 @@ func setupTestDB(t *testing.T) (*sql.DB, func()) {
 
 // truncateTables clears data between tests to ensure isolation.
 func truncateTables(t *testing.T, db *sql.DB) {
-	t.Helper()
-	tables := []string{"audit_logs", "rules", "sources"}
-	for _, table := range tables {
-		query := fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)
-		if _, err := db.Exec(query); err != nil {
-			t.Fatalf("failed to truncate table %s: %s", table, err)
-		}
-	}
+    t.Helper()
+
+    ctx := context.Background() 
+
+    tables := []string{"audit_logs", "rules", "sources"}
+    for _, table := range tables {
+        query := fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)
+        if _, err := db.ExecContext(ctx, query); err != nil {
+            t.Fatalf("failed to truncate table %s: %s", table, err)
+        }
+    }
 }

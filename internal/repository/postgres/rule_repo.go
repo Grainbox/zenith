@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Grainbox/zenith/internal/domain"
@@ -49,7 +50,7 @@ func (r *RuleRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Rule, err
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, errors.New("rule not found")
 		}
 		return nil, fmt.Errorf("failed to get rule by id: %w", err)
 	}
@@ -73,7 +74,9 @@ func (r *RuleRepo) ListBySourceID(ctx context.Context, sourceID uuid.UUID, opts 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list rules: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var rules []*domain.Rule
 	for rows.Next() {
