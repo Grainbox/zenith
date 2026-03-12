@@ -29,7 +29,7 @@
     *   **Deliverables:**
         *   Code in `/internal/repository/rule_repo.go`.
         *   Unit tests mocking the database connection to validate logic.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-304] Go Integration Tests with `testcontainers-go`**
     *   **Description:** Replace naive storage tests with robust integration tests that spin up an ephemeral CockroachDB Docker container during `go test`.
