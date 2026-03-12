@@ -26,3 +26,6 @@ vendor/
 
 # Protobuf generated files
 pkg/pb/
+
+# Environment variables
+.env

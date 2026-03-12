@@ -15,7 +15,7 @@
     *   **Deliverables:**
         *   Database connection string secured.
         *   Go code in `/internal/storage/cockroach.go` to handle connection pooling.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-302] Database Schema & Migrations**
     *   **Description:** Define the schema for `Sources`, `Rules` (using `JSONB` for rule conditions), and `AuditLogs` as described in the architecture. Implement a tool like `golang-migrate` for versioned database schemas.

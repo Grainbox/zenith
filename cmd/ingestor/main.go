@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,7 +13,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Grainbox/zenith/internal/config"
 	"github.com/Grainbox/zenith/internal/ingestor"
+	"github.com/Grainbox/zenith/internal/storage"
 	"github.com/Grainbox/zenith/pkg/pb/proto/v1/protov1connect"
 	"connectrpc.com/grpcreflect"
 	"golang.org/x/net/http2"
@@ -19,9 +23,8 @@ import (
 )
 
 const (
-	serverPort         = ":50051"
-	readHeaderTimeout  = 10 * time.Second
-	shutdownTimeout    = 15 * time.Second
+	readHeaderTimeout = 10 * time.Second
+	shutdownTimeout   = 15 * time.Second
 )
 
 func main() {
@@ -32,26 +35,26 @@ func main() {
 }
 
 func run() error {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+	logger := setupLogger()
 
-	srv := ingestor.NewServer(logger)
-
-	path, handler := protov1connect.NewIngestorServiceHandler(srv)
-	reflector := grpcreflect.NewStaticReflector(
-		protov1connect.IngestorServiceName,
-	)
-
-	mux := http.NewServeMux()
-	mux.Handle(path, handler)
-	mux.Handle(grpcreflect.NewHandlerV1(reflector))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
-
-	server := &http.Server{
-		Addr:              serverPort,
-		Handler:           h2c.NewHandler(mux, &http2.Server{}),
-		ReadHeaderTimeout: readHeaderTimeout,
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
 	}
+
+	db, err := initDatabase(cfg.Database, logger)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("Failed to close database connection", "error", err)
+		} else {
+			logger.Info("Database connection closed")
+		}
+	}()
+
+	serverAddr, server := setupHTTPServer(cfg, logger)
 
 	// Listen for shutdown signals
 	stop := make(chan os.Signal, 1)
@@ -59,7 +62,7 @@ func run() error {
 
 	// Start server in a goroutine
 	go func() {
-		logger.Info("Starting Zenith Ingestor Server", "addr", serverPort)
+		logger.Info("Starting Zenith Ingestor Server", "addr", serverAddr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("Server failure", "error", err)
 		}
@@ -79,4 +82,46 @@ func run() error {
 
 	logger.Info("Server exited properly")
 	return nil
+}
+
+func setupLogger() *slog.Logger {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+	return logger
+}
+
+func initDatabase(cfg config.DatabaseConfig, logger *slog.Logger) (*sql.DB, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db, err := storage.NewDatabase(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	logger.Info("Database connected successfully")
+	return db, nil
+}
+
+func setupHTTPServer(cfg *config.Config, logger *slog.Logger) (string, *http.Server) {
+	srv := ingestor.NewServer(logger)
+
+	path, handler := protov1connect.NewIngestorServiceHandler(srv)
+	reflector := grpcreflect.NewStaticReflector(
+		protov1connect.IngestorServiceName,
+	)
+
+	mux := http.NewServeMux()
+	mux.Handle(path, handler)
+	mux.Handle(grpcreflect.NewHandlerV1(reflector))
+	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
+
+	serverAddr := ":" + cfg.Port
+	server := &http.Server{
+		Addr:              serverAddr,
+		Handler:           h2c.NewHandler(mux, &http2.Server{}),
+		ReadHeaderTimeout: readHeaderTimeout,
+	}
+
+	return serverAddr, server
 }
