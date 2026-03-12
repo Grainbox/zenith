@@ -34,3 +34,6 @@ pkg/pb/
 # Kubernetes local files
 deployments/k8s/local/config.yaml
 deployments/k8s/local/secrets.yaml
+
+# Claude Code
+CLAUDE.md

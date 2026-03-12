@@ -28,3 +28,12 @@ type Rule struct {
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
 }
+
+// Event represents a normalized, domain-level event ready for processing.
+type Event struct {
+	ID        string    `json:"id"`
+	Type      string    `json:"type"`
+	Source    string    `json:"source"`
+	Payload   []byte    `json:"payload"`
+	Timestamp time.Time `json:"timestamp"`
+}

@@ -58,7 +58,7 @@
     *   **Deliverables:**
         *   Code in `/internal/engine/dispatcher.go` or similar.
         *   A configurable worker pool (e.g., 10 concurrent workers).
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-402] Rule Evaluation Logic**
     *   **Description:** Implement the actual filtering logic. When a worker picks up an event, it queries (or uses a cached version of) the active rules from the database to see if the event condition matches (e.g., parsing the JSON payload).

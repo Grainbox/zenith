@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/Grainbox/zenith/internal/engine"
 	v1 "github.com/Grainbox/zenith/pkg/pb/proto/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,8 @@ import (
 func TestIngestEvent(t *testing.T) {
 	// Setup logger to discard output during tests
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	server := NewServer(logger)
+	pipeline := engine.New(2, 10, logger)
+	server := NewServer(logger, pipeline)
 
 	t.Run("success - valid event", func(t *testing.T) {
 		req := &v1.IngestEventRequest{

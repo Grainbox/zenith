@@ -22,11 +22,18 @@ type SecretsConfig struct {
 	SlackWebhookURL string
 }
 
+// EngineConfig holds event processing pipeline settings.
+type EngineConfig struct {
+	WorkerCount     int
+	EventBufferSize int
+}
+
 // Config holds the application configuration.
 type Config struct {
 	Port     string
 	Database DatabaseConfig
 	Secrets  SecretsConfig
+	Engine   EngineConfig
 }
 
 // Load loads the configuration from environment variables.
@@ -34,7 +41,7 @@ type Config struct {
 func Load() (*Config, error) {
 	// Load environment variables from files.
 	// Order: .env.config and .env.secrets
-	godotenv.Load(".env.config", ".env.secrets")
+	_ = godotenv.Load(".env.config", ".env.secrets")
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -51,6 +58,8 @@ func Load() (*Config, error) {
 
 	apiKeySalt := os.Getenv("API_KEY_SALT")
 	slackWebhook := os.Getenv("SLACK_WEBHOOK_URL")
+	workerCount := parseEnvInt("ENGINE_WORKER_COUNT", 10)
+	bufferSize := parseEnvInt("ENGINE_BUFFER_SIZE", 1024)
 
 	return &Config{
 		Port: port,
@@ -62,6 +71,10 @@ func Load() (*Config, error) {
 		Secrets: SecretsConfig{
 			APIKeySalt:      apiKeySalt,
 			SlackWebhookURL: slackWebhook,
+		},
+		Engine: EngineConfig{
+			WorkerCount:     workerCount,
+			EventBufferSize: bufferSize,
 		},
 	}, nil
 }

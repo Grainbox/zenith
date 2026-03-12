@@ -5,20 +5,25 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/Grainbox/zenith/internal/domain"
+	"github.com/Grainbox/zenith/internal/engine"
 	v1 "github.com/Grainbox/zenith/pkg/pb/proto/v1"
 )
 
 // Server handles incoming event ingestion requests.
 type Server struct {
-	logger *slog.Logger
+	logger   *slog.Logger
+	pipeline *engine.Pipeline
 }
 
 // NewServer creates a new Server.
-func NewServer(logger *slog.Logger) *Server {
+func NewServer(logger *slog.Logger, pipeline *engine.Pipeline) *Server {
 	return &Server{
-		logger: logger,
+		logger:   logger,
+		pipeline: pipeline,
 	}
 }
 
@@ -31,12 +36,34 @@ func (s *Server) IngestEvent(
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("event is required"))
 	}
 
-	event := req.GetEvent()
+	protoEvent := req.GetEvent()
+
+	// Convert protobuf event to domain event
+	timestamp := time.Now()
+	if protoEvent.Timestamp != nil {
+		timestamp = protoEvent.Timestamp.AsTime()
+	}
+
+	domainEvent := &domain.Event{
+		ID:        protoEvent.GetEventId(),
+		Type:      protoEvent.GetEventType(),
+		Source:    protoEvent.GetSource(),
+		Payload:   protoEvent.GetPayload(),
+		Timestamp: timestamp,
+	}
+
+	// Enqueue to pipeline
+	if err := s.pipeline.Enqueue(domainEvent); err != nil {
+		if errors.Is(err, engine.ErrPipelineFull) {
+			return nil, connect.NewError(connect.CodeResourceExhausted, errors.New("event pipeline queue is full"))
+		}
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
 
 	s.logger.Info("Event Received",
-		"event_id", event.GetEventId(),
-		"event_type", event.GetEventType(),
-		"source", event.GetSource(),
+		"event_id", protoEvent.GetEventId(),
+		"event_type", protoEvent.GetEventType(),
+		"source", protoEvent.GetSource(),
 	)
 
 	return &v1.IngestEventResponse{

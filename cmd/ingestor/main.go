@@ -15,6 +15,7 @@ import (
 
 	"connectrpc.com/grpcreflect"
 	"github.com/Grainbox/zenith/internal/config"
+	"github.com/Grainbox/zenith/internal/engine"
 	"github.com/Grainbox/zenith/internal/ingestor"
 	"github.com/Grainbox/zenith/internal/storage"
 	"github.com/Grainbox/zenith/pkg/pb/proto/v1/protov1connect"
@@ -54,7 +55,10 @@ func run() error {
 		}
 	}()
 
-	serverAddr, server := setupHTTPServer(cfg, logger)
+	pipeline := setupPipeline(cfg, logger)
+	pipeline.Start(context.Background())
+
+	serverAddr, server := setupHTTPServer(cfg, logger, pipeline)
 
 	// Listen for shutdown signals
 	stop := make(chan os.Signal, 1)
@@ -80,6 +84,9 @@ func run() error {
 		return err
 	}
 
+	// Drain event pipeline and wait for workers to finish
+	pipeline.Stop()
+
 	logger.Info("Server exited properly")
 	return nil
 }
@@ -103,8 +110,12 @@ func initDatabase(cfg config.DatabaseConfig, logger *slog.Logger) (*sql.DB, erro
 	return db, nil
 }
 
-func setupHTTPServer(cfg *config.Config, logger *slog.Logger) (string, *http.Server) {
-	srv := ingestor.NewServer(logger)
+func setupPipeline(cfg *config.Config, logger *slog.Logger) *engine.Pipeline {
+	return engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, logger)
+}
+
+func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.Pipeline) (string, *http.Server) {
+	srv := ingestor.NewServer(logger, pipeline)
 
 	path, handler := protov1connect.NewIngestorServiceHandler(srv)
 	reflector := grpcreflect.NewStaticReflector(
