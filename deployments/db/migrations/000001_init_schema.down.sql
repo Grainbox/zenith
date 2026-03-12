@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS rules;
+DROP TABLE IF EXISTS sources;

@@ -22,7 +22,7 @@
     *   **Deliverables:**
         *   Migration SQL scripts in `/deployments/db/migrations/`.
         *   Automation to run these migrations against the CockroachDB cluster.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-303] Dynamic Rule Management (CRUD)**
     *   **Description:** Implement the Go logic (Repository pattern) to create, read, update, and delete filtering rules from the database.
