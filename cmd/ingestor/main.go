@@ -13,6 +13,7 @@ import (
 
 	"github.com/Grainbox/zenith/internal/ingestor"
 	"github.com/Grainbox/zenith/pkg/pb/proto/v1/protov1connect"
+	"connectrpc.com/grpcreflect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -37,9 +38,14 @@ func run() error {
 	srv := ingestor.NewServer(logger)
 
 	path, handler := protov1connect.NewIngestorServiceHandler(srv)
+	reflector := grpcreflect.NewStaticReflector(
+		protov1connect.IngestorServiceName,
+	)
 
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
+	mux.Handle(grpcreflect.NewHandlerV1(reflector))
+	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
 	server := &http.Server{
 		Addr:              serverPort,
