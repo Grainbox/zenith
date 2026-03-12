@@ -35,7 +35,7 @@
     *   **Description:** Replace naive storage tests with robust integration tests that spin up an ephemeral CockroachDB Docker container during `go test`.
     *   **Deliverables:**
         *   A test suite in `/internal/repository/rule_repo_test.go` using `testcontainers-go`.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-305] [CKAD] Kubernetes Configuration (ConfigMaps & Secrets)**
     *   **Description:** Externalize all configuration (DB URL, Port, API Keys). Learn how to inject these values into the Pods using Kubernetes resources.
