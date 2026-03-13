@@ -54,8 +54,22 @@ func (p *Pipeline) Enqueue(event *domain.Event) error {
 
 // Stop closes the event channel and waits for all workers to finish processing.
 // Must be called after the gRPC server has stopped accepting requests.
-func (p *Pipeline) Stop() {
+// Returns context.DeadlineExceeded if workers do not drain within ctx's deadline.
+func (p *Pipeline) Stop(ctx context.Context) error {
 	close(p.eventCh)
-	p.wg.Wait()
-	p.logger.Info("Event pipeline stopped")
+
+	done := make(chan struct{})
+	go func() {
+		p.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		p.logger.Info("Event pipeline stopped cleanly")
+		return nil
+	case <-ctx.Done():
+		p.logger.Warn("Pipeline drain timed out; some in-flight events may be lost")
+		return ctx.Err()
+	}
 }

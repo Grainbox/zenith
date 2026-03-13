@@ -71,7 +71,7 @@
     *   **Description:** Ensure that when a SIGTERM is received, the Ingestor stops accepting new gRPC requests, but the worker goroutines finish processing all events currently waiting in the channels before the program exits fully.
     *   **Deliverables:**
         *   Use `sync.WaitGroup` to track active workers and ensure wait logic in `main.go`.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-404] Engine Stress Test & Concurrency Validation**
     *   **Description:** Write tests to fire thousands of mock events simultaneously into the Ingestor to guarantee there are no data races or deadlocks (using `go test -race`).

@@ -27,6 +27,7 @@ import (
 const (
 	readHeaderTimeout = 10 * time.Second
 	shutdownTimeout   = 15 * time.Second
+	drainTimeout      = 30 * time.Second
 )
 
 func main() {
@@ -82,11 +83,15 @@ func run() error {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		return err
+		logger.Error("HTTP server shutdown error", "error", err)
 	}
 
 	// Drain event pipeline and wait for workers to finish
-	pipeline.Stop()
+	drainCtx, drainCancel := context.WithTimeout(context.Background(), drainTimeout)
+	defer drainCancel()
+	if err := pipeline.Stop(drainCtx); err != nil {
+		logger.Warn("Pipeline did not drain within timeout", "error", err)
+	}
 
 	logger.Info("Server exited properly")
 	return nil
