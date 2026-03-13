@@ -65,7 +65,7 @@
     *   **Deliverables:**
         *   Evaluation logic in `/internal/engine/evaluator.go`.
         *   Unit tests specifically checking complex JSON filtering conditions.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-403] Advanced Graceful Shutdown (Zero Event Loss)**
     *   **Description:** Ensure that when a SIGTERM is received, the Ingestor stops accepting new gRPC requests, but the worker goroutines finish processing all events currently waiting in the channels before the program exits fully.

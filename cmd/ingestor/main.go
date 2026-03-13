@@ -17,6 +17,7 @@ import (
 	"github.com/Grainbox/zenith/internal/config"
 	"github.com/Grainbox/zenith/internal/engine"
 	"github.com/Grainbox/zenith/internal/ingestor"
+	"github.com/Grainbox/zenith/internal/repository/postgres"
 	"github.com/Grainbox/zenith/internal/storage"
 	"github.com/Grainbox/zenith/pkg/pb/proto/v1/protov1connect"
 	"golang.org/x/net/http2"
@@ -55,7 +56,7 @@ func run() error {
 		}
 	}()
 
-	pipeline := setupPipeline(cfg, logger)
+	pipeline := setupPipeline(cfg, db, logger)
 	pipeline.Start(context.Background())
 
 	serverAddr, server := setupHTTPServer(cfg, logger, pipeline)
@@ -110,8 +111,11 @@ func initDatabase(cfg config.DatabaseConfig, logger *slog.Logger) (*sql.DB, erro
 	return db, nil
 }
 
-func setupPipeline(cfg *config.Config, logger *slog.Logger) *engine.Pipeline {
-	return engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, logger)
+func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) *engine.Pipeline {
+	ruleRepo := postgres.NewRuleRepo(db)
+	sourceRepo := postgres.NewSourceRepo(db)
+	evaluator := engine.NewEvaluator(ruleRepo, sourceRepo, logger)
+	return engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, evaluator, logger)
 }
 
 func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.Pipeline) (string, *http.Server) {

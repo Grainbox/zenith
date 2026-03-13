@@ -19,6 +19,7 @@ type SourceRepository interface {
 	Create(ctx context.Context, source *domain.Source) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Source, error)
 	GetByAPIKey(ctx context.Context, apiKey string) (*domain.Source, error)
+	GetByName(ctx context.Context, name string) (*domain.Source, error)
 }
 
 // RuleRepository defines the contract for rule persistence.

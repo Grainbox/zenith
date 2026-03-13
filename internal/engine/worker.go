@@ -14,12 +14,23 @@ func (p *Pipeline) runWorker(ctx context.Context, id int) {
 	}
 }
 
-// processEvent handles a single event. Currently a placeholder for rule evaluation (Issue-402).
-func (p *Pipeline) processEvent(_ context.Context, event *domain.Event, workerID int) {
-	p.logger.Info("processing event",
-		"worker_id", workerID,
-		"event_id", event.ID,
-		"event_type", event.Type,
-		"source", event.Source,
-	)
+// processEvent handles a single event by evaluating it against rules and logging the result.
+func (p *Pipeline) processEvent(ctx context.Context, event *domain.Event, workerID int) {
+	matched, err := p.evaluator.Evaluate(ctx, event)
+	if err != nil {
+		p.logger.Error("Failed to evaluate event",
+			"worker_id", workerID,
+			"event_id", event.ID,
+			"error", err,
+		)
+		return
+	}
+
+	if len(matched) > 0 {
+		p.logger.Info("Event matched rules",
+			"worker_id", workerID,
+			"event_id", event.ID,
+			"matched_count", len(matched),
+		)
+	}
 }

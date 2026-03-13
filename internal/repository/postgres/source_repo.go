@@ -68,3 +68,19 @@ func (r *SourceRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain.So
 	}
 	return &s, nil
 }
+
+// GetByName retrieves a source by its name.
+func (r *SourceRepo) GetByName(ctx context.Context, name string) (*domain.Source, error) {
+	query := `SELECT id, name, api_key, created_at, updated_at FROM sources WHERE name = $1`
+	var s domain.Source
+	err := r.db.QueryRowContext(ctx, query, name).Scan(
+		&s.ID, &s.Name, &s.APIKey, &s.CreatedAt, &s.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("source not found")
+		}
+		return nil, fmt.Errorf("failed to get source by name: %w", err)
+	}
+	return &s, nil
+}

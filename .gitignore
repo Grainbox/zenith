@@ -37,3 +37,4 @@ deployments/k8s/local/secrets.yaml
 
 # Claude Code
 CLAUDE.md
+.claude/

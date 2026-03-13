@@ -17,15 +17,17 @@ var ErrPipelineFull = errors.New("event pipeline queue is full")
 type Pipeline struct {
 	eventCh     chan *domain.Event
 	workerCount int
+	evaluator   *Evaluator
 	logger      *slog.Logger
 	wg          sync.WaitGroup
 }
 
-// New creates a new Pipeline with the given worker count and buffer size.
-func New(workerCount, bufferSize int, logger *slog.Logger) *Pipeline {
+// New creates a new Pipeline with the given worker count, buffer size, and evaluator.
+func New(workerCount, bufferSize int, evaluator *Evaluator, logger *slog.Logger) *Pipeline {
 	return &Pipeline{
 		eventCh:     make(chan *domain.Event, bufferSize),
 		workerCount: workerCount,
+		evaluator:   evaluator,
 		logger:      logger,
 	}
 }

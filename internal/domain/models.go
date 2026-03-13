@@ -37,3 +37,10 @@ type Event struct {
 	Payload   []byte    `json:"payload"`
 	Timestamp time.Time `json:"timestamp"`
 }
+
+// Condition represents a filtering rule condition (JSON DSL).
+type Condition struct {
+	Field    string      `json:"field"`
+	Operator string      `json:"operator"`
+	Value    interface{} `json:"value"`
+}
