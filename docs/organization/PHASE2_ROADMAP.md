@@ -78,7 +78,7 @@
     *   **Deliverables:**
         *   Proof of successful race-detector tests.
         *   Log of the engine processing a burst of events smoothly.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
 
 *   **[Issue-405] [CKAD] Kubernetes Persistence (PV & PVC)**
     *   **Description:** Statefulness in K8s. Although CockroachDB is serverless (managed externally) for Prod, we should practice running a local PostgreSQL pod with persistent storage to master PersistentVolumes.
