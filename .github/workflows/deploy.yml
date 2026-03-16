@@ -182,7 +182,7 @@ jobs:
             -input=false
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan -lock=false
+        run: terraform apply -auto-approve -lock=false tfplan
 
       - name: Get deployed URL
         run: |
