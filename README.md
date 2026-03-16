@@ -1,6 +1,7 @@
 # Zenith — Distributed Event Observer
 
-[![Go Version](https://img.shields.io/badge/go-1.26+-blue.svg)](https://golang.org/doc/devel/release.html)
+[![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org/doc/devel/release.html)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green.svg)](https://github.com/Grainbox/zenith/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > A high-performance, Cloud-Native backend platform that ingests event streams, evaluates them against dynamic business rules stored in CockroachDB, and dispatches actions to external sinks.
@@ -41,7 +42,7 @@ Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both num
 |---|---|---|
 | **Phase 1** — Foundations | gRPC skeleton, proto contracts, linting, CI | ✅ Complete |
 | **Phase 2** — Persistence & Rule Engine | CockroachDB, rule evaluation, concurrency, graceful shutdown | ✅ Complete |
-| **Phase 3** — IaC & Cloud | Terraform, GitHub Actions, Dispatcher service, REST gateway | Upcoming |
+| **Phase 3** — IaC & Cloud | Terraform, GitHub Actions CI/CD, Dispatcher service, REST gateway | 🔄 In Progress |
 | **Phase 4** — Observability | OpenTelemetry, Prometheus, CKAD certification | Upcoming |
 
 ---
@@ -50,7 +51,7 @@ Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both num
 
 | Concern | Technology |
 |---|---|
-| Language | Go 1.26 |
+| Language | Go 1.24 |
 | RPC | ConnectRPC (gRPC + HTTP/2 via h2c) |
 | Protocol | Protocol Buffers v3 |
 | Database | CockroachDB Serverless (pgx/v5 driver, no ORM) |
@@ -67,7 +68,7 @@ Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both num
 
 ### Prerequisites
 
-- Go 1.26+
+- Go 1.24+
 - Docker (required for integration tests)
 - `grpcurl` (for manual testing)
 - `buf` CLI (for regenerating protobuf code)
@@ -203,6 +204,41 @@ make migrate-down
 # Build and deploy to local Kind cluster
 make build-kind
 ```
+
+---
+
+## Continuous Deployment
+
+### GitHub Actions Pipeline
+
+Every push to `main` triggers an automated CI/CD pipeline (`.github/workflows/deploy.yml`):
+
+```
+Push to main
+    ↓
+[Lint + Test] (pull requests run lint/test only)
+    ↓
+[Build & Push Docker Image] → Artifact Registry
+    ↓
+[Terraform Apply] → Deploy to Cloud Run
+    ↓
+[Output] → Service URL available
+```
+
+**Pipeline Stages:**
+
+1. **Lint** — `golangci-lint` + `buf lint`
+2. **Test** — Unit tests (`go test -short`)
+3. **Build & Push** — Docker image to Google Artifact Registry (tag = git SHA)
+4. **Deploy** — `terraform apply` with updated `image_tag`
+
+**PR Behavior:** Pull requests only run lint & test (no deployment).
+
+**Setup:** Configure 4 GitHub Secrets (see [Issue-502 plan](docs/organization/plans/ISSUE_502_CICD.md)):
+- `GCP_PROJECT_ID`
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+- `GCP_SERVICE_ACCOUNT`
+- `TF_BACKEND_BUCKET`
 
 ---
 

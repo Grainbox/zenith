@@ -24,7 +24,7 @@ The system is built as a **Cloud-Native** suite of components written in **Go**,
 
 ## 3. Detailed Technical Stack
 
-* **Runtime:** Go 1.24+ (utilizing Generics and Workspace mode).
+* **Runtime:** Go 1.24 (utilizing Generics and structured logging via `log/slog`).
 * **Communication Layer:** * **Protocol Buffers (protobuf):** For strict schema definition and cross-service contract safety.
 * **gRPC:** For low-latency, high-performance internal communication.
 
@@ -35,7 +35,8 @@ The system is built as a **Cloud-Native** suite of components written in **Go**,
 * **Prometheus / Grafana:** For infrastructure and application performance monitoring.
 
 
-* **Infrastructure as Code (IaC):** **Terraform** to provision Google Cloud Run (or AWS Fargate) and managed DB instances.
+* **Infrastructure as Code (IaC):** **Terraform** to provision Google Cloud Run and managed DB instances (CockroachDB Serverless).
+* **CI/CD:** **GitHub Actions** with Workload Identity Federation for secure, keyless authentication to GCP.
 
 ---
 

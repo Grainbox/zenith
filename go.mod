@@ -1,6 +1,6 @@
 module github.com/Grainbox/zenith
 
-go 1.26.1
+go 1.24
 
 require (
 	connectrpc.com/connect v1.19.1

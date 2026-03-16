@@ -4,9 +4,10 @@ Thank you for your interest in contributing to **ZENITH**, the Distributed Event
 
 ## 🛠 Prerequisites
 
-- **Go:** 1.24+
-- **Linter:** [golangci-lint](https://golangci-lint.run/usage/install/) (latest version)
-- **Protocol Buffers:** `protoc` and `protoc-gen-go` (for future API changes)
+- **Go:** 1.24+ (must match `go.mod` version)
+- **Linter:** [golangci-lint](https://golangci-lint.run/usage/install/) v1.62.0+
+- **Protocol Buffers:** `buf` CLI (for code generation)
+- **Docker:** Required for integration tests (`testcontainers-go`)
 
 ## 📁 Project Structure
 
@@ -42,6 +43,23 @@ go test ./...
 
 ## 📜 Development Workflow
 
-1.  Pick an issue from the [Roadmap](docs/organization/PHASE1_ROADMAP.md).
+1.  Pick an issue from the [Roadmap](docs/organization/PHASE3_ROADMAP.md).
 2.  Follow the 12-Factor App principles.
 3.  Ensure your code is documented with proper Go comments.
+4.  Run tests locally before pushing:
+    ```bash
+    go test ./...
+    golangci-lint run
+    buf lint
+    ```
+
+## 🔄 Continuous Integration
+
+All pushes to `main` trigger GitHub Actions (`.github/workflows/deploy.yml`):
+
+- **Pull Requests:** Lint + Test only (no deployment)
+- **Push to main:** Full pipeline (lint → test → build → push → deploy)
+
+The pipeline uses **Workload Identity Federation** for secure GCP authentication (no long-lived secrets stored).
+
+See [Issue-502 plan](docs/organization/plans/ISSUE_502_CICD.md) for setup details.
