@@ -9,7 +9,7 @@ data "google_secret_manager_secret" "zenith_secrets" {
 }
 
 resource "google_secret_manager_secret_iam_member" "zenith_runner_access" {
-  for_each  = google_secret_manager_secret.zenith_secrets
+  for_each  = data.google_secret_manager_secret.zenith_secrets
   secret_id = each.value.id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.zenith_runner.email}"
