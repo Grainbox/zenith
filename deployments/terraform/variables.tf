@@ -40,9 +40,10 @@ variable "db_max_idle_conns" {
 }
 
 variable "database_url" {
-  description = "CockroachDB connection string"
+  description = "CockroachDB connection string (managed as GCP Secret, optional for terraform plan)"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "api_key_salt" {
