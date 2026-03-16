@@ -1,6 +1,6 @@
 # Zenith — Distributed Event Observer
 
-[![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org/doc/devel/release.html)
+[![Go Version](https://img.shields.io/badge/go-1.26+-blue.svg)](https://golang.org/doc/devel/release.html)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green.svg)](https://github.com/Grainbox/zenith/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -51,7 +51,7 @@ Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both num
 
 | Concern | Technology |
 |---|---|
-| Language | Go 1.24 |
+| Language | Go 1.26 |
 | RPC | ConnectRPC (gRPC + HTTP/2 via h2c) |
 | Protocol | Protocol Buffers v3 |
 | Database | CockroachDB Serverless (pgx/v5 driver, no ORM) |
@@ -68,7 +68,7 @@ Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both num
 
 ### Prerequisites
 
-- Go 1.24+
+- Go 1.26+
 - Docker (required for integration tests)
 - `grpcurl` (for manual testing)
 - `buf` CLI (for regenerating protobuf code)

@@ -24,7 +24,7 @@ The system is built as a **Cloud-Native** suite of components written in **Go**,
 
 ## 3. Detailed Technical Stack
 
-* **Runtime:** Go 1.24 (utilizing Generics and structured logging via `log/slog`).
+* **Runtime:** Go 1.26+ (utilizing Generics and structured logging via `log/slog`).
 * **Communication Layer:** * **Protocol Buffers (protobuf):** For strict schema definition and cross-service contract safety.
 * **gRPC:** For low-latency, high-performance internal communication.
 

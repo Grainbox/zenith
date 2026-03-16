@@ -4,7 +4,7 @@ Thank you for your interest in contributing to **ZENITH**, the Distributed Event
 
 ## 🛠 Prerequisites
 
-- **Go:** 1.24+ (must match `go.mod` version)
+- **Go:** 1.26+ (must match `go.mod` version)
 - **Linter:** [golangci-lint](https://golangci-lint.run/usage/install/) v1.62.0+
 - **Protocol Buffers:** `buf` CLI (for code generation)
 - **Docker:** Required for integration tests (`testcontainers-go`)
