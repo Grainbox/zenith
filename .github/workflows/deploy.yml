@@ -178,7 +178,8 @@ jobs:
             -var="image_tag=${{ env.IMAGE_TAG }}" \
             -out=tfplan \
             -no-color \
-            -lock=false
+            -lock=false \
+            -input=false
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan -lock=false
