@@ -136,6 +136,17 @@ func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.P
 	mux.Handle(grpcreflect.NewHandlerV1(reflector))
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
+	// Health check endpoint for Cloud Run probes
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("OK"))
+	})
+
+	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status": "online", "version": "v1.0.0"}`))
+	})
+
 	serverAddr := ":" + cfg.Port
 	server := &http.Server{
 		Addr:              serverAddr,

@@ -56,7 +56,7 @@
 ### 📝 Sprint 2 Backlog
 
 *   **[Issue-201] gRPC Server Implementation (Ingestor - Skeleton)**
-    *   **Description:** Develop the gRPC server component using the code generated in [Issue-104]. The server should listen on a port (e.g., 50051) and implement the `IngestorService` interface.
+    *   **Description:** Develop the gRPC server component using the code generated in [Issue-104]. The server should listen on a port (e.g., 8080) and implement the `IngestorService` interface.
     *   **Deliverables:**
         *   Code in `/internal/ingestor/server.go`.
         *   Update `/cmd/zenith/main.go` to start the gRPC server.

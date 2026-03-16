@@ -84,7 +84,7 @@ DATABASE_URL=postgresql://user:password@host/zenith?sslmode=require
 Optional environment variables (with defaults):
 
 ```bash
-ZENITH_PORT=50051
+PORT=8080
 ENGINE_WORKER_COUNT=10
 ENGINE_BUFFER_SIZE=1024
 DB_MAX_OPEN_CONNS=25
@@ -131,7 +131,7 @@ Expected startup output:
 ```json
 {"level":"INFO","msg":"Database connected successfully"}
 {"level":"INFO","msg":"Event pipeline started","worker_count":10}
-{"level":"INFO","msg":"Starting Zenith Ingestor Server","addr":":50051"}
+{"level":"INFO","msg":"Starting Zenith Ingestor Server","addr":":8080"}
 ```
 
 ### Sending an Event
@@ -148,7 +148,7 @@ grpcurl -plaintext \
       "payload": "eyJhbW91bnQiOjI1MCwiY3VycmVuY3kiOiJVU0QifQ=="
     }
   }' \
-  localhost:50051 \
+  localhost:8080 \
   proto.v1.IngestorService/IngestEvent
 ```
 

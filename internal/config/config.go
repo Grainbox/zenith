@@ -48,9 +48,9 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
 	}
 
-	port := os.Getenv("ZENITH_PORT")
+	port := os.Getenv("PORT")
 	if port == "" {
-		port = "50051" // Default port
+		port = "8080" // Default port
 	}
 
 	maxOpen := parseEnvInt("DB_MAX_OPEN_CONNS", 25)

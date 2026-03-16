@@ -8,7 +8,7 @@ spec:
       image: zenith-ingestor:latest
       imagePullPolicy: IfNotPresent
       ports:
-        - containerPort: 50051
+        - containerPort: 8080
       envFrom:
         - configMapRef:
             name: zenith-config

@@ -1,7 +1,7 @@
 # ping.ps1
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-$ADDRESS = "localhost:50051"
+$ADDRESS = "localhost:8080"
 $SERVICE = "proto.v1.IngestorService"
 $METHOD = "IngestEvent"
 

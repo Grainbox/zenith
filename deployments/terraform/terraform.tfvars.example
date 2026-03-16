@@ -1,0 +1,11 @@
+project_id  = "zenith-490409"
+region      = "europe-west1"
+environment = "dev"
+image_tag   = "latest"
+
+# Load secrets from .env.secrets
+# Replace with your actual values
+database_url      = "postgresql://user:password@host:26257/zenith?sslmode=require&..."
+api_key_salt      = "f557ukq8DAD645tFMzHP/jLk2NKGI8Txgt/3KCNmulg="
+slack_webhook_url = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+

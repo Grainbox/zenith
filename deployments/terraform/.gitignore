@@ -1,0 +1,18 @@
+# Terraform state (ne jamais commiter)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Fichiers de variables réels (contiennent des valeurs sensibles)
+*.tfvars
+!*.tfvars.example
+
+# Fichiers de plan binaires (ne jamais commiter)
+*.tfplan
+tfplan
+
+# Fichiers temporaires
+.DS_Store
+*.swp
+*.swo
+*~
