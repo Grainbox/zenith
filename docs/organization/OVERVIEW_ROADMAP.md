@@ -42,12 +42,14 @@
     *   Write **Terraform** scripts to provision Google Cloud Run or AWS Fargate and networking.
     *   Build a **GitHub Actions** pipeline for "Continuous Deployment" (Auto-deploy on `git push`).
     *   Add a REST Gateway (using `grpc-gateway` or `Gin`) to accept standard Webhooks.
+    *   Implement the **Dispatcher** service (`cmd/dispatcher/main.go`): consume matched events from the Rule Engine and forward them to external sinks (Slack, webhooks, S3). Write results to the `audit_logs` table.
+    *   Multi-binary architecture: Ingestor and Dispatcher are independently deployable and scalable Go binaries.
 
 *   **Certification (Kubernetes/CKAD):**
     *   Workload Management: Master Deployments, Rolling Updates, and Services (ClusterIP, NodePort, LoadBalancer).
     *   Probes: Implement Liveness and Readiness probes to ensure zero-downtime.
 
-*   **Milestone:** Zenith is live on a public URL, fully provisioned via Code (IaC), with automated deployments.
+*   **Milestone:** Zenith is live on a public URL, fully provisioned via Code (IaC), with automated deployments. Matched events are dispatched to at least one external sink and logged in `audit_logs`.
 
 ---
 
@@ -65,6 +67,22 @@
     *   **Final Exam: Sit for the CKAD certification.**
 
 *   **Milestone:** A "Production-Ready" project on GitHub and a CKAD badge on your LinkedIn profile.
+
+---
+
+## PHASE 5: Microservice Decomposition (Future)
+
+*Goal: Achieve true independent scaling of each pipeline layer.*
+
+*   **Engineering (Distributed Systems):**
+    *   Introduce a **message broker** (Kafka, NATS, or GCP Pub/Sub) between the Ingestor and the Rule Engine.
+    *   Extract the Rule Engine into its own binary (`cmd/engine/main.go`): consumes events from the broker, evaluates rules, publishes matched results.
+    *   The Ingestor becomes a pure ingestion layer — it no longer owns rule evaluation.
+    *   Each binary (`cmd/ingestor/`, `cmd/engine/`, `cmd/dispatcher/`) becomes an independently scalable Kubernetes `Deployment`.
+
+*   **Why this matters:** The current design (in-process Go channel) ties the Ingestor and Rule Engine together in one process. Scaling the Ingestor pod also scales the Rule Engine — they cannot be tuned independently. A broker decouples throughput from evaluation capacity.
+
+*   **Milestone:** Three independently deployable services, each with their own Kubernetes `Deployment`, HPA (HorizontalPodAutoscaler), and resource limits.
 
 ---
 

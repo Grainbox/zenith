@@ -85,10 +85,10 @@
     *   **Deliverables:**
         *   `/deployments/k8s/local/storage/pv.yaml` and `pvc.yaml`.
         *   A temporary pod mounting the volume to persist some mock data.
-    *   **Status:** [ ] To Do
+    *   **Status:** Delayed
 
 *   **[Issue-406] Level 2 Final Validation (Milestone)**
     *   **Description:** Start the entire system. Ingest an event via gRPC, watch the background worker pick it up, validate it against a rule in CockroachDB, and log the action successfully before a clean system shutdown.
     *   **Deliverables:**
         *   Complete end-to-end trace logged to console.
-    *   **Status:** [ ] To Do
+    *   **Status:** [x] Completed
