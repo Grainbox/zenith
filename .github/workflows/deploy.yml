@@ -27,10 +27,18 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Set up buf
+        uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+
+      - name: Generate Protobuf code
+        run: buf generate
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.62.0
 
       - name: Set up buf
         uses: bufbuild/buf-action@v1
@@ -55,6 +63,14 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Set up buf
+        uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+
+      - name: Generate Protobuf code
+        run: buf generate
 
       - name: Run unit tests
         run: go test -short -race -count=1 ./...
