@@ -46,7 +46,7 @@ resource "google_cloud_run_v2_service" "ingestor" {
         name = "DATABASE_URL"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.zenith_secrets["DATABASE_URL"].secret_id
+            secret  = data.google_secret_manager_secret.zenith_secrets["DATABASE_URL"].secret_id
             version = "latest"
           }
         }
@@ -56,7 +56,7 @@ resource "google_cloud_run_v2_service" "ingestor" {
         name = "API_KEY_SALT"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.zenith_secrets["API_KEY_SALT"].secret_id
+            secret  = data.google_secret_manager_secret.zenith_secrets["API_KEY_SALT"].secret_id
             version = "latest"
           }
         }
@@ -66,7 +66,7 @@ resource "google_cloud_run_v2_service" "ingestor" {
         name = "SLACK_WEBHOOK_URL"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.zenith_secrets["SLACK_WEBHOOK_URL"].secret_id
+            secret  = data.google_secret_manager_secret.zenith_secrets["SLACK_WEBHOOK_URL"].secret_id
             version = "latest"
           }
         }
