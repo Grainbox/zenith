@@ -177,10 +177,11 @@ jobs:
             -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var="image_tag=${{ env.IMAGE_TAG }}" \
             -out=tfplan \
-            -no-color
+            -no-color \
+            -lock=false
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan -lock=false
 
       - name: Get deployed URL
         run: |
