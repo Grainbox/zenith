@@ -488,13 +488,13 @@ grpcurl -proto api/proto/v1/event.proto $SERVICE_URL \
 
 ## Livrable : Checklist de Validation
 
-- [ ] `terraform fmt -recursive` — aucune modification
-- [ ] `terraform validate` — succès
-- [ ] `terraform plan` — aucune ressource inattendue (`0 to destroy`)
-- [ ] `terraform apply` — toutes les ressources créées sans erreur
-- [ ] `terraform output service_url` — retourne une URL HTTPS
-- [ ] Valeurs secrètes chargées via `gcloud secrets versions add`
-- [ ] Image buildée, taguée et pushée vers Artifact Registry
-- [ ] Cloud Run service en état `ACTIVE`
-- [ ] Appel `grpcurl` ou `curl` sur l'URL publique — réponse valide
-- [ ] Aucun fichier `*.tfstate` ou `*.tfvars` commité (`git status` propre)
+- [x] `terraform fmt -recursive` — aucune modification
+- [x] `terraform validate` — succès
+- [x] `terraform plan` — aucune ressource inattendue (`0 to destroy`)
+- [x] `terraform apply` — toutes les ressources créées sans erreur
+- [x] `terraform output service_url` — retourne une URL HTTPS
+- [x] Valeurs secrètes chargées via `gcloud secrets versions add`
+- [x] Image buildée, taguée et pushée vers Artifact Registry
+- [x] Cloud Run service en état `ACTIVE`
+- [x] Appel `grpcurl` ou `curl` sur l'URL publique — réponse valide
+- [x] Aucun fichier `*.tfstate` ou `*.tfvars` commité (`git status` propre)

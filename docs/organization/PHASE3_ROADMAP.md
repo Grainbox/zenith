@@ -15,14 +15,14 @@
     *   **Deliverables:**
         *   Terraform config in `/deployments/terraform/` (main, variables, outputs).
         *   `terraform plan` and `terraform apply` produce a live, reachable endpoint.
-    *   **Status:** [ ] Pending
+    *   **Status:** [x] Completed
 
 *   **[Issue-502] GitHub Actions CI/CD Pipeline**
     *   **Description:** Build a GitHub Actions workflow that automatically lints, tests, builds the Docker image, pushes it to a container registry, and deploys to the cloud environment on every push to `main`.
     *   **Deliverables:**
         *   `.github/workflows/deploy.yml` covering lint → test → build → push → deploy.
         *   Secrets (registry credentials, cloud credentials) injected via GitHub Secrets.
-    *   **Status:** [ ] Pending
+    *   **Status:** [ ] Pending — Plan disponible dans `docs/organization/plans/ISSUE_502_CICD.md`
 
 *   **[Issue-503] REST Gateway for Webhook Ingestion**
     *   **Description:** Add an HTTP/JSON gateway alongside the existing ConnectRPC interface so that external services can push events via standard webhooks without a gRPC client. Use `grpc-gateway` or a lightweight `Gin` router to translate incoming POST requests into the existing `IngestEvent` pipeline.
