@@ -173,13 +173,7 @@ jobs:
 
       - name: Terraform Plan
         run: |
-          terraform plan \
-            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
-            -var="image_tag=${{ env.IMAGE_TAG }}" \
-            -out=tfplan \
-            -no-color \
-            -lock=false \
-            -input=false
+          terraform plan -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="image_tag=${{ env.IMAGE_TAG }}" -var="database_url=${{ secrets.DATABASE_URL }}" -var="api_key_salt=${{ secrets.API_KEY_SALT }}" -var="slack_webhook_url=${{ secrets.SLACK_WEBHOOK_URL }}" -out=tfplan -no-color -lock=false -input=false
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -lock=false tfplan

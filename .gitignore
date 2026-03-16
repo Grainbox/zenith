@@ -31,6 +31,12 @@ pkg/pb/
 .env.secrets
 .env.config
 
+# Terraform secrets
+deployments/terraform/terraform.tfvars
+deployments/terraform/*.tfvars
+deployments/terraform/.terraform/
+deployments/terraform/.terraform.lock.hcl
+
 # Kubernetes local files
 deployments/k8s/local/config.yaml
 deployments/k8s/local/secrets.yaml
