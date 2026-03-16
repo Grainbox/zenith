@@ -18,9 +18,9 @@ resource "google_secret_manager_secret" "zenith_secrets" {
 }
 
 resource "google_secret_manager_secret_version" "zenith_secrets" {
-  for_each    = { for k, v in local.secret_values : k => v if v != "" }
+  for_each    = toset(local.secrets)
   secret      = google_secret_manager_secret.zenith_secrets[each.key].id
-  secret_data = each.value
+  secret_data = local.secret_values[each.key]
 }
 
 resource "google_secret_manager_secret_iam_member" "zenith_runner_access" {
