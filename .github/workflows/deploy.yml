@@ -125,6 +125,7 @@ jobs:
         run: |
           docker build \
             -f build/package/Dockerfile \
+            --build-arg COMMIT_HASH=${{ env.IMAGE_TAG }} \
             -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/ingestor:${{ env.IMAGE_TAG }} \
             -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/ingestor:latest \
             .

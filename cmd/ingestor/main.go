@@ -30,6 +30,9 @@ const (
 	drainTimeout      = 30 * time.Second
 )
 
+// commit is injected at build time via -ldflags "-X main.commit=<git-sha>"
+var commit = "dev"
+
 func main() {
 	if err := run(); err != nil {
 		slog.Error("Application failure", "error", err)
@@ -144,7 +147,7 @@ func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.P
 
 	mux.HandleFunc("GET /status", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"status": "online", "version": "v1.0.0"}`))
+		_, _ = fmt.Fprintf(w, `{"status":"online","commit":%q}`, commit)
 	})
 
 	serverAddr := ":" + cfg.Port

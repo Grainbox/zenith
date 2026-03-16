@@ -15,7 +15,8 @@ COPY . .
 # Generate Protobuf code
 RUN $GOPATH/bin/buf generate
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /zenith-ingestor cmd/ingestor/main.go
+ARG COMMIT_HASH=dev
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s -X main.commit=${COMMIT_HASH}" -o /zenith-ingestor cmd/ingestor/main.go
 FROM gcr.io/distroless/static-debian12
 COPY --from=builder /zenith-ingestor /zenith-ingestor
 
