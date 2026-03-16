@@ -27,6 +27,14 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Cache golangci-lint
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin
+          key: ${{ runner.os }}-golangci-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-golangci-
+
       - name: Set up buf
         uses: bufbuild/buf-action@v1
         with:
@@ -66,6 +74,14 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Cache golangci-lint
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin
+          key: ${{ runner.os }}-golangci-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-golangci-
 
       - name: Set up buf
         uses: bufbuild/buf-action@v1
