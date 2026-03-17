@@ -29,6 +29,45 @@ spec:
         - name: ca-cert
           mountPath: "/root/.postgresql"
           readOnly: true
+
+        # Resource management: prevent noisy neighbor problem and enable proper scheduling
+        resources:
+          requests:
+            cpu: "100m"            # Reservation: scheduler allocates at least 0.1 CPU
+            memory: "256Mi"        # Reservation: scheduler allocates at least 256 MiB
+          limits:
+            cpu: "1000m"           # Hard limit: CPU throttling after 1 core
+            memory: "512Mi"        # Hard limit: OOM killed if exceeded
+
+        # Startup probe: give time for application to bootstrap (DB connection, migrations, etc.)
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 10
+
+        # Readiness probe: traffic routed only to ready pods during rolling updates
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+
+        # Liveness probe: restart pod if it becomes unresponsive
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
       volumes:
       - name: ca-cert
         secret:

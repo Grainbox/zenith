@@ -38,24 +38,3 @@ variable "db_max_idle_conns" {
   type        = number
   default     = 25
 }
-
-variable "database_url" {
-  description = "CockroachDB connection string (managed as GCP Secret, optional for terraform plan)"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "api_key_salt" {
-  description = "Salt for API key generation"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "slack_webhook_url" {
-  description = "Slack webhook URL for notifications"
-  type        = string
-  sensitive   = true
-  default     = ""
-}

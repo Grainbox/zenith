@@ -1,13 +1,10 @@
 locals {
   secrets = ["DATABASE_URL", "API_KEY_SALT", "SLACK_WEBHOOK_URL"]
-
-  secret_values = {
-    "DATABASE_URL"     = var.database_url
-    "API_KEY_SALT"     = var.api_key_salt
-    "SLACK_WEBHOOK_URL" = var.slack_webhook_url
-  }
 }
 
+# Create secret containers (NOT secret versions — those are injected manually via gcloud)
+# Secret values are injected one-time via: gcloud secrets versions add <secret-id> --data-file=-
+# This ensures secrets never pass through Terraform variables or state files.
 resource "google_secret_manager_secret" "zenith_secrets" {
   for_each  = toset(local.secrets)
   secret_id = "zenith-${lower(replace(each.value, "_", "-"))}-${var.environment}"
@@ -15,12 +12,8 @@ resource "google_secret_manager_secret" "zenith_secrets" {
   replication {
     auto {}
   }
-}
 
-resource "google_secret_manager_secret_version" "zenith_secrets" {
-  for_each    = toset(local.secrets)
-  secret      = google_secret_manager_secret.zenith_secrets[each.key].id
-  secret_data = local.secret_values[each.key]
+  depends_on = [google_project_service.services]
 }
 
 resource "google_secret_manager_secret_iam_member" "zenith_runner_access" {
