@@ -1,11 +1,11 @@
-version: 2
+version: "2"
 run:
   timeout: 5m
   modules-download-mode: readonly
   concurrency: 4
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - govet
@@ -31,24 +31,22 @@ linters:
     - usestdlibvars
     - whitespace
     - gocritic
-
-linters-settings:
-  revive:
-    rules:
-      - name: exported
-        arguments:
-          - disableStutteringCheck
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-  goconst:
-    min-len: 2
-    min-occurrences: 3
-  misspell:
-    locale: US
+  settings:
+    revive:
+      rules:
+        - name: exported
+          arguments:
+            - disableStutteringCheck
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    misspell:
+      locale: US
 
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
