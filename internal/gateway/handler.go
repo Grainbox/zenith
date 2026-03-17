@@ -108,7 +108,7 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	source, err := g.sourceRepo.GetByAPIKey(ctx, apiKey)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			writeError(w, http.StatusInternalServerError, "INTERNAL", "request context cancelled")
+			writeError(w, http.StatusInternalServerError, "INTERNAL", "request context canceled")
 			return
 		}
 		writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "invalid API key")

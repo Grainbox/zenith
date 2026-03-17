@@ -27,14 +27,6 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Cache golangci-lint
-        uses: actions/cache@v4
-        with:
-          path: ~/go/bin
-          key: ${{ runner.os }}-golangci-${{ hashFiles('go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-golangci-
-
       - name: Set up buf
         uses: bufbuild/buf-action@v1
         with:
@@ -43,13 +35,10 @@ jobs:
       - name: Generate Protobuf code
         run: buf generate
 
-      - name: Install golangci-lint
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0
-          echo "$HOME/go/bin" >> $GITHUB_PATH
-
       - name: Run golangci-lint
-        run: golangci-lint run
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2.1
 
       - name: Set up buf
         uses: bufbuild/buf-action@v1
