@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zenith-ingestor-deployment
+  labels:
+    app: zenith-ingestor
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zenith-ingestor
+  template:
+    metadata:
+      labels:
+        app: zenith-ingestor
+    spec:
+      containers:
+      - name: zenith-ingestor
+        image: zenith-ingestor:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: zenith-config
+        - secretRef:
+            name: zenith-secrets
+        volumeMounts:
+        - name: ca-cert
+          mountPath: "/root/.postgresql"
+          readOnly: true
+      volumes:
+      - name: ca-cert
+        secret:
+          secretName: zenith-ca-cert
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1

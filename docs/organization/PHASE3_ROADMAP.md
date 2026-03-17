@@ -38,7 +38,7 @@
     *   **Deliverables:**
         *   `/deployments/k8s/local/ingestor-deployment.yaml` with configurable `replicas` and `strategy: RollingUpdate`.
         *   Successful `kubectl rollout undo` demonstration on a bad image tag.
-    *   **Status:** [ ] Pending
+    *   **Status:** [x] Completed
 
 ---
 
