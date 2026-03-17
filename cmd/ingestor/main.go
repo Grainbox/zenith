@@ -16,6 +16,7 @@ import (
 	"connectrpc.com/grpcreflect"
 	"github.com/Grainbox/zenith/internal/config"
 	"github.com/Grainbox/zenith/internal/engine"
+	"github.com/Grainbox/zenith/internal/gateway"
 	"github.com/Grainbox/zenith/internal/ingestor"
 	"github.com/Grainbox/zenith/internal/repository/postgres"
 	"github.com/Grainbox/zenith/internal/storage"
@@ -63,7 +64,7 @@ func run() error {
 	pipeline := setupPipeline(cfg, db, logger)
 	pipeline.Start(context.Background())
 
-	serverAddr, server := setupHTTPServer(cfg, logger, pipeline)
+	serverAddr, server := setupHTTPServer(cfg, logger, pipeline, db)
 
 	// Listen for shutdown signals
 	stop := make(chan os.Signal, 1)
@@ -126,7 +127,7 @@ func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) *engine.
 	return engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, evaluator, logger)
 }
 
-func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.Pipeline) (string, *http.Server) {
+func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.Pipeline, db *sql.DB) (string, *http.Server) {
 	srv := ingestor.NewServer(logger, pipeline)
 
 	path, handler := protov1connect.NewIngestorServiceHandler(srv)
@@ -149,6 +150,11 @@ func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.P
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = fmt.Fprintf(w, `{"status":"online","commit":%q}`, commit)
 	})
+
+	// REST Gateway for webhook ingestion
+	sourceRepo := postgres.NewSourceRepo(db)
+	gw := gateway.NewGateway(logger, pipeline, sourceRepo)
+	mux.HandleFunc("POST /v1/events", gw.HandleIngestEvent)
 
 	serverAddr := ":" + cfg.Port
 	server := &http.Server{

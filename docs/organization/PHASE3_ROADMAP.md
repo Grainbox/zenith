@@ -15,6 +15,7 @@
     *   **Deliverables:**
         *   Terraform config in `/deployments/terraform/` (main, variables, outputs).
         *   `terraform plan` and `terraform apply` produce a live, reachable endpoint.
+        *   Plan disponible dans `docs/organization/plans/ISSUE_501_TERRAFORM.md`
     *   **Status:** [x] Completed
 
 *   **[Issue-502] GitHub Actions CI/CD Pipeline**
@@ -22,14 +23,15 @@
     *   **Deliverables:**
         *   `.github/workflows/deploy.yml` covering lint → test → build → push → deploy.
         *   Secrets (registry credentials, cloud credentials) injected via GitHub Secrets.
-    *   **Status:** [ ] Pending — Plan disponible dans `docs/organization/plans/ISSUE_502_CICD.md`
+        *   Plan disponible dans `docs/organization/plans/ISSUE_502_CICD.md`
+    *   **Status:** [x] Completed
 
 *   **[Issue-503] REST Gateway for Webhook Ingestion**
     *   **Description:** Add an HTTP/JSON gateway alongside the existing ConnectRPC interface so that external services can push events via standard webhooks without a gRPC client. Use `grpc-gateway` or a lightweight `Gin` router to translate incoming POST requests into the existing `IngestEvent` pipeline.
     *   **Deliverables:**
         *   HTTP endpoint `POST /v1/events` translating the JSON body into an `IngestEvent` call.
         *   Gateway wired in `cmd/ingestor/main.go` alongside the existing h2c server.
-    *   **Status:** [ ] Pending
+    *   **Status:** [x] Completed
 
 *   **[Issue-504] [CKAD] Kubernetes Deployments & Rolling Updates**
     *   **Description:** Replace the bare pod manifest from Phase 2 with a proper `Deployment` resource. Practice rolling updates and rollbacks using `kubectl rollout` to simulate zero-downtime deploys.

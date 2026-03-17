@@ -368,13 +368,13 @@ Le job `deploy` écrit dans `$GITHUB_STEP_SUMMARY` l'URL publique du service apr
 
 ## Livrable : Checklist de Validation
 
-- [ ] `zenith-ci` Service Account créé avec les rôles minimaux
-- [ ] Workload Identity Pool et Provider configurés sur GCP
-- [ ] Binding IAM restreint au repo `<ORG>/<REPO>` (pas à toute l'organisation)
-- [ ] 4 secrets GitHub configurés (`GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `TF_BACKEND_BUCKET`)
-- [ ] `.github/workflows/deploy.yml` commité sur `main`
-- [ ] Premier run du pipeline : tous les jobs passent au vert
-- [ ] Image visible dans Artifact Registry avec le SHA comme tag
-- [ ] `terraform output service_url` retourne l'URL du service mis à jour
-- [ ] Appel `curl` ou `grpcurl` sur l'URL publique après le déploiement automatique
-- [ ] Sur une PR : seuls `lint` et `test` s'exécutent (pas de build ni deploy)
+- [x] `zenith-ci` Service Account créé avec les rôles minimaux
+- [x] Workload Identity Pool et Provider configurés sur GCP
+- [x] Binding IAM restreint au repo `<ORG>/<REPO>` (pas à toute l'organisation)
+- [x] 4 secrets GitHub configurés (`GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `TF_BACKEND_BUCKET`)
+- [x] `.github/workflows/deploy.yml` commité sur `main`
+- [x] Premier run du pipeline : tous les jobs passent au vert
+- [x] Image visible dans Artifact Registry avec le SHA comme tag
+- [x] `terraform output service_url` retourne l'URL du service mis à jour
+- [x] Appel `curl` ou `grpcurl` sur l'URL publique après le déploiement automatique
+- [x] Sur une PR : seuls `lint` et `test` s'exécutent (pas de build ni deploy)
