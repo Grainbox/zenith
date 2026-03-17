@@ -76,31 +76,31 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	var req IngestEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		if errors.Is(err, io.EOF) {
-			writeError(w, http.StatusBadRequest, "INVALID_JSON", "request body is empty")
+			g.writeError(w, http.StatusBadRequest, "INVALID_JSON", "request body is empty")
 			return
 		}
-		writeError(w, http.StatusBadRequest, "INVALID_JSON", "failed to decode JSON: "+err.Error())
+		g.writeError(w, http.StatusBadRequest, "INVALID_JSON", "failed to decode JSON: "+err.Error())
 		return
 	}
 
 	// Validate required fields
 	if req.EventID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "event_id is required")
+		g.writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "event_id is required")
 		return
 	}
 	if req.EventType == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "event_type is required")
+		g.writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "event_type is required")
 		return
 	}
 	if req.Source == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "source is required")
+		g.writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "source is required")
 		return
 	}
 
 	// Read API key from header
 	apiKey := r.Header.Get("X-Api-Key")
 	if apiKey == "" {
-		writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "X-Api-Key header is required")
+		g.writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "X-Api-Key header is required")
 		return
 	}
 
@@ -108,10 +108,10 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	source, err := g.sourceRepo.GetByAPIKey(ctx, apiKey)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			writeError(w, http.StatusInternalServerError, "INTERNAL", "request context canceled")
+			g.writeError(w, http.StatusInternalServerError, "INTERNAL", "request context canceled")
 			return
 		}
-		writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "invalid API key")
+		g.writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "invalid API key")
 		return
 	}
 
@@ -122,13 +122,13 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 			"got", req.Source,
 			"api_key", apiKey,
 		)
-		writeError(w, http.StatusForbidden, "PERMISSION_DENIED", "source name does not match authenticated source")
+		g.writeError(w, http.StatusForbidden, "PERMISSION_DENIED", "source name does not match authenticated source")
 		return
 	}
 
-	// Ensure payload is not nil
-	payload := []byte(req.Payload)
-	if payload == nil {
+	// Use payload as-is; default to empty object if missing
+	payload := req.Payload
+	if len(payload) == 0 {
 		payload = []byte("{}")
 	}
 
@@ -144,14 +144,14 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	// Enqueue to pipeline
 	if err := g.pipeline.Enqueue(domainEvent); err != nil {
 		if errors.Is(err, engine.ErrPipelineFull) {
-			writeError(w, http.StatusServiceUnavailable, "RESOURCE_EXHAUSTED", "event pipeline queue is full")
+			g.writeError(w, http.StatusServiceUnavailable, "RESOURCE_EXHAUSTED", "event pipeline queue is full")
 			return
 		}
 		g.logger.Error("Failed to enqueue event",
 			"event_id", req.EventID,
 			"error", err,
 		)
-		writeError(w, http.StatusInternalServerError, "INTERNAL", "failed to enqueue event")
+		g.writeError(w, http.StatusInternalServerError, "INTERNAL", "failed to enqueue event")
 		return
 	}
 
@@ -163,24 +163,24 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// Return 202 Accepted
-	writeJSON(w, http.StatusAccepted, successResponse{
+	g.writeJSON(w, http.StatusAccepted, successResponse{
 		Success: true,
 		Message: "Event accepted",
 	})
 }
 
-// writeJSON writes a JSON response.
-func writeJSON(w http.ResponseWriter, status int, v interface{}) {
+// writeJSON writes a JSON response with structured logging context.
+func (g *Gateway) writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {
-		slog.Error("Failed to encode JSON response", "error", err)
+		g.logger.Error("Failed to encode JSON response", "error", err)
 	}
 }
 
-// writeError writes an error response.
-func writeError(w http.ResponseWriter, status int, code, message string) {
-	writeJSON(w, status, errorResponse{
+// writeError writes an error response with the given status, code, and message.
+func (g *Gateway) writeError(w http.ResponseWriter, status int, code, message string) {
+	g.writeJSON(w, status, errorResponse{
 		Code:    code,
 		Message: message,
 	})
