@@ -44,3 +44,10 @@ type Condition struct {
 	Operator string      `json:"operator"`
 	Value    interface{} `json:"value"`
 }
+
+// MatchedEvent pairs an event with the rule it matched.
+// It is produced by the Rule Engine and consumed by the Dispatcher.
+type MatchedEvent struct {
+	Event *Event
+	Rule  *Rule
+}

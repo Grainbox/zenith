@@ -15,6 +15,8 @@ import (
 
 	"connectrpc.com/grpcreflect"
 	"github.com/Grainbox/zenith/internal/config"
+	"github.com/Grainbox/zenith/internal/dispatcher"
+	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/engine"
 	"github.com/Grainbox/zenith/internal/gateway"
 	"github.com/Grainbox/zenith/internal/ingestor"
@@ -61,8 +63,9 @@ func run() error {
 		}
 	}()
 
-	pipeline := setupPipeline(cfg, db, logger)
+	pipeline, disp := setupPipeline(cfg, db, logger)
 	pipeline.Start(context.Background())
+	disp.Start(context.Background())
 
 	serverAddr, server := setupHTTPServer(cfg, logger, pipeline, db)
 
@@ -97,6 +100,13 @@ func run() error {
 		logger.Warn("Pipeline did not drain within timeout", "error", err)
 	}
 
+	// Drain dispatcher and wait for dispatches to complete
+	dispatchCtx, dispatchCancel := context.WithTimeout(context.Background(), drainTimeout)
+	defer dispatchCancel()
+	if err := disp.Stop(dispatchCtx); err != nil {
+		logger.Warn("Dispatcher did not drain within timeout", "error", err)
+	}
+
 	logger.Info("Server exited properly")
 	return nil
 }
@@ -120,11 +130,20 @@ func initDatabase(cfg config.DatabaseConfig, logger *slog.Logger) (*sql.DB, erro
 	return db, nil
 }
 
-func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) *engine.Pipeline {
+func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) (*engine.Pipeline, *dispatcher.Dispatcher) {
 	ruleRepo := postgres.NewRuleRepo(db)
 	sourceRepo := postgres.NewSourceRepo(db)
 	evaluator := engine.NewEvaluator(ruleRepo, sourceRepo, logger)
-	return engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, evaluator, logger)
+	pipeline := engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, evaluator, logger)
+
+	// Wire dispatcher to receive matched events from the pipeline
+	matchCh := make(chan *domain.MatchedEvent, 256)
+	pipeline.SetDispatcher(matchCh)
+
+	sinks := []dispatcher.Sink{dispatcher.NoopSink{}}
+	disp := dispatcher.New(matchCh, 4, sinks, logger)
+
+	return pipeline, disp
 }
 
 func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.Pipeline, db *sql.DB) (string, *http.Server) {

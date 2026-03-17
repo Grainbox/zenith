@@ -16,6 +16,7 @@ var ErrPipelineFull = errors.New("event pipeline queue is full")
 // Pipeline manages the event processing workflow with a configurable worker pool.
 type Pipeline struct {
 	eventCh     chan *domain.Event
+	dispatchCh  chan<- *domain.MatchedEvent
 	workerCount int
 	evaluator   *Evaluator
 	logger      *slog.Logger
@@ -26,10 +27,16 @@ type Pipeline struct {
 func New(workerCount, bufferSize int, evaluator *Evaluator, logger *slog.Logger) *Pipeline {
 	return &Pipeline{
 		eventCh:     make(chan *domain.Event, bufferSize),
+		dispatchCh:  nil,
 		workerCount: workerCount,
 		evaluator:   evaluator,
 		logger:      logger,
 	}
+}
+
+// SetDispatcher wires a dispatch channel for matched events. Must be called before Start.
+func (p *Pipeline) SetDispatcher(ch chan<- *domain.MatchedEvent) {
+	p.dispatchCh = ch
 }
 
 // Start launches the worker goroutines to process events from the channel.

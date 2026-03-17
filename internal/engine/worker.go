@@ -14,7 +14,7 @@ func (p *Pipeline) runWorker(ctx context.Context, id int) {
 	}
 }
 
-// processEvent handles a single event by evaluating it against rules and logging the result.
+// processEvent handles a single event by evaluating it against rules and dispatching matches.
 func (p *Pipeline) processEvent(ctx context.Context, event *domain.Event, workerID int) {
 	matched, err := p.evaluator.Evaluate(ctx, event)
 	if err != nil {
@@ -24,6 +24,22 @@ func (p *Pipeline) processEvent(ctx context.Context, event *domain.Event, worker
 			"error", err,
 		)
 		return
+	}
+
+	// Forward matched events to dispatcher if wired
+	for _, rule := range matched {
+		if p.dispatchCh == nil {
+			continue
+		}
+		me := &domain.MatchedEvent{Event: event, Rule: rule}
+		select {
+		case p.dispatchCh <- me:
+		default:
+			p.logger.Warn("Dispatch channel full, dropping matched event",
+				"event_id", event.ID,
+				"rule_id", rule.ID,
+			)
+		}
 	}
 
 	if len(matched) > 0 {
