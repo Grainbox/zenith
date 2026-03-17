@@ -22,9 +22,9 @@ Zenith is a three-layer pipeline.
 |---|---|---|---|
 | **Ingestor** — Receives events via gRPC, enqueues to worker pool | `cmd/ingestor/` | Standalone binary | ✅ Complete |
 | **Rule Engine** — Evaluates events against rules from CockroachDB | `internal/engine/` | Embedded in Ingestor process (in-process channel) | ✅ Complete |
-| **Dispatcher** — Routes matched events to external sinks, writes audit logs | `cmd/dispatcher/` | Standalone binary | Planned (Phase 3) |
+| **Dispatcher** — Routes matched events to external sinks, writes audit logs | `cmd/dispatcher/` | Standalone binary | ✅ Sprint 6 |
 
-> **Note:** The Rule Engine currently runs inside the Ingestor process and communicates via an in-memory Go channel. This is intentional for Phase 2. True independent scaling requires decoupling via a message broker (Kafka/NATS) — planned for a later phase.
+> **Note:** In local development, the Ingestor and Dispatcher communicate via an in-memory Go channel (phase 2). For independent scaling in production, a message broker (Kafka/NATS) will replace the channel (Phase 3).
 
 ### Domain Model
 
@@ -91,7 +91,6 @@ ENGINE_BUFFER_SIZE=1024
 DB_MAX_OPEN_CONNS=25
 DB_MAX_IDLE_CONNS=25
 API_KEY_SALT=
-SLACK_WEBHOOK_URL=
 ```
 
 ### Database Setup

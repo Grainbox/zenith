@@ -16,10 +16,9 @@ type DatabaseConfig struct {
 	MaxIdleConns int
 }
 
-// SecretsConfig holds sensitive application settings.
+// SecretsConfig holds sensitive settings shared across both binaries.
 type SecretsConfig struct {
-	APIKeySalt      string
-	SlackWebhookURL string
+	APIKeySalt string
 }
 
 // EngineConfig holds event processing pipeline settings.
@@ -57,7 +56,6 @@ func Load() (*Config, error) {
 	maxIdle := parseEnvInt("DB_MAX_IDLE_CONNS", 25)
 
 	apiKeySalt := os.Getenv("API_KEY_SALT")
-	slackWebhook := os.Getenv("SLACK_WEBHOOK_URL")
 	workerCount := parseEnvInt("ENGINE_WORKER_COUNT", 10)
 	bufferSize := parseEnvInt("ENGINE_BUFFER_SIZE", 1024)
 
@@ -69,8 +67,7 @@ func Load() (*Config, error) {
 			MaxIdleConns: maxIdle,
 		},
 		Secrets: SecretsConfig{
-			APIKeySalt:      apiKeySalt,
-			SlackWebhookURL: slackWebhook,
+			APIKeySalt: apiKeySalt,
 		},
 		Engine: EngineConfig{
 			WorkerCount:     workerCount,

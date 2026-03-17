@@ -40,7 +40,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	_ = cfg // cfg.Secrets.SlackWebhookURL used by sinks in Issue-602
+	_ = cfg // Sink target URLs come from rule.TargetAction at runtime — not from cfg
 
 	matchCh := make(chan *domain.MatchedEvent, matchBufSize)
 

@@ -25,7 +25,7 @@ Successeur officiel de Container Registry (GCR). Supporte les politiques de rét
 
 ### Secrets : Secret Manager
 
-Les trois variables sensibles (`DATABASE_URL`, `API_KEY_SALT`, `SLACK_WEBHOOK_URL`) sont injectées depuis Secret Manager. Elles ne transitent jamais dans un fichier `.tfvars`, une variable d'environnement en clair, ou le state Terraform.
+Les deux variables sensibles (`DATABASE_URL`, `API_KEY_SALT`) sont injectées depuis Secret Manager. Elles ne transitent jamais dans un fichier `.tfvars`, une variable d'environnement en clair, ou le state Terraform.
 
 ### State : Backend GCS
 
@@ -255,7 +255,7 @@ L'URL du registre sera : `{region}-docker.pkg.dev/{project_id}/zenith/ingestor:{
 
 ```hcl
 locals {
-  secrets = ["DATABASE_URL", "API_KEY_SALT", "SLACK_WEBHOOK_URL"]
+  secrets = ["DATABASE_URL", "API_KEY_SALT"]
 }
 
 # Déclaration des secrets (sans valeur — les valeurs sont chargées hors Terraform)

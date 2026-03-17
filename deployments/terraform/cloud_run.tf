@@ -62,16 +62,6 @@ resource "google_cloud_run_v2_service" "ingestor" {
         }
       }
 
-      env {
-        name = "SLACK_WEBHOOK_URL"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.zenith_secrets["SLACK_WEBHOOK_URL"].secret_id
-            version = "latest"
-          }
-        }
-      }
-
       # Liveness probe: verify process is running
       liveness_probe {
         http_get {

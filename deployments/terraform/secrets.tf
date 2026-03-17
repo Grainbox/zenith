@@ -1,5 +1,5 @@
 locals {
-  secrets = ["DATABASE_URL", "API_KEY_SALT", "SLACK_WEBHOOK_URL"]
+  secrets = ["DATABASE_URL", "API_KEY_SALT"]
 }
 
 # Create secret containers (NOT secret versions — those are injected manually via gcloud)

@@ -346,11 +346,13 @@ Update `run()` to start/stop the dispatcher alongside the pipeline (close `match
 
 ---
 
-## Config Env Vars (no new required vars for Issue-601)
+## Config Env Vars
 
-Issue-601 uses only existing config. Issue-602 will add:
-- `SLACK_WEBHOOK_URL` (already in `SecretsConfig`)
-- `WEBHOOK_TARGET_URL` (new, to add in Issue-602)
+Issue-601 uses only existing config. No new env vars needed for the Dispatcher.
+
+Issue-602 (real sinks) will use `rule.TargetAction` as the target URL for all sink types — Slack, webhooks, and any future platform. Sink targets are data-driven, not configuration.
+
+Optional additions for Issue-602:
 - `DISPATCHER_WORKER_COUNT` (optional, can add in Issue-602)
 
 ---
