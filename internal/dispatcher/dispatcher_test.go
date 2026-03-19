@@ -15,9 +15,11 @@ import (
 func TestDispatcherStartStop(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	matchCh := make(chan *domain.MatchedEvent, 10)
-	sinks := []Sink{NoopSink{}}
 
-	d := New(matchCh, 2, sinks, logger)
+	registry := NewRegistry()
+	registry.Register("http", &TestMockSink{name: "http"})
+
+	d := New(matchCh, 2, registry, logger)
 	d.Start(context.Background())
 
 	// Send an event
@@ -34,6 +36,7 @@ func TestDispatcherStartStop(t *testing.T) {
 		Name:         "test-rule",
 		Condition:    []byte(`{"field":"foo","operator":"==","value":"bar"}`),
 		TargetAction: "noop",
+		SinkType:     "http",
 		IsActive:     true,
 	}
 	matched := &domain.MatchedEvent{Event: event, Rule: rule}
@@ -58,9 +61,11 @@ func TestDispatcherStopTimeout(t *testing.T) {
 	slowSink := &TestSlowSink{
 		delay: 10 * time.Second,
 	}
-	sinks := []Sink{slowSink}
 
-	d := New(matchCh, 1, sinks, logger)
+	registry := NewRegistry()
+	registry.Register("slow", slowSink)
+
+	d := New(matchCh, 1, registry, logger)
 	d.Start(context.Background())
 
 	event := &domain.Event{
@@ -76,6 +81,7 @@ func TestDispatcherStopTimeout(t *testing.T) {
 		Name:         "test-rule",
 		Condition:    []byte(`{}`),
 		TargetAction: "noop",
+		SinkType:     "slow",
 		IsActive:     true,
 	}
 	matchCh <- &domain.MatchedEvent{Event: event, Rule: rule}
@@ -94,20 +100,19 @@ func TestDispatcherStopTimeout(t *testing.T) {
 	}
 }
 
-func TestNoopSinkSend(t *testing.T) {
-	sink := NoopSink{}
-	if sink.Name() != "noop" {
-		t.Fatalf("expected name noop, got %s", sink.Name())
-	}
+// TestMockSink is a simple test sink that tracks if Send was called.
+type TestMockSink struct {
+	name       string
+	sendCalled bool
+}
 
-	event := &domain.Event{ID: "test"}
-	rule := &domain.Rule{ID: uuid.New()}
-	matched := &domain.MatchedEvent{Event: event, Rule: rule}
+func (s *TestMockSink) Name() string {
+	return s.name
+}
 
-	err := sink.Send(context.Background(), matched)
-	if err != nil {
-		t.Fatalf("NoopSink.Send should not error: %v", err)
-	}
+func (s *TestMockSink) Send(ctx context.Context, event *domain.MatchedEvent) error {
+	s.sendCalled = true
+	return nil
 }
 
 // TestSlowSink is a test sink that delays before sending.
@@ -125,5 +130,109 @@ func (s *TestSlowSink) Send(ctx context.Context, event *domain.MatchedEvent) err
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
+	}
+}
+
+func TestRegistry_Register_Success(t *testing.T) {
+	registry := NewRegistry()
+	sink := &TestMockSink{name: "test"}
+
+	registry.Register("test", sink)
+
+	resolved, ok := registry.Resolve("test")
+	if !ok {
+		t.Fatal("expected sink to be resolved")
+	}
+	if resolved != sink {
+		t.Fatal("expected same sink instance")
+	}
+}
+
+func TestRegistry_Resolve_Unknown(t *testing.T) {
+	registry := NewRegistry()
+
+	_, ok := registry.Resolve("unknown")
+	if ok {
+		t.Fatal("expected unknown type to not be resolved")
+	}
+}
+
+func TestRegistry_Register_Duplicate_Panics(t *testing.T) {
+	registry := NewRegistry()
+	sink := &TestMockSink{name: "test"}
+
+	registry.Register("test", sink)
+
+	defer func() {
+		if recover() == nil {
+			t.Fatal("expected panic on duplicate registration")
+		}
+	}()
+
+	registry.Register("test", sink)
+}
+
+func TestDispatcher_Routes_To_Correct_Sink(t *testing.T) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	registry := NewRegistry()
+	httpSink := &TestMockSink{name: "http"}
+	discordSink := &TestMockSink{name: "discord"}
+
+	registry.Register("http", httpSink)
+	registry.Register("discord", discordSink)
+
+	matchCh := make(chan *domain.MatchedEvent, 1)
+	disp := New(matchCh, 1, registry, logger)
+
+	matched := &domain.MatchedEvent{
+		Event: &domain.Event{
+			ID:     "test-event-1",
+			Type:   "test",
+			Source: "test-source",
+		},
+		Rule: &domain.Rule{
+			ID:       uuid.New(),
+			SinkType: "discord",
+		},
+	}
+
+	disp.dispatch(context.Background(), matched, 0)
+
+	if !discordSink.sendCalled {
+		t.Fatal("expected discord sink to be called")
+	}
+	if httpSink.sendCalled {
+		t.Fatal("expected http sink to not be called")
+	}
+}
+
+func TestDispatcher_Unknown_Sink_Type_Warns(t *testing.T) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	registry := NewRegistry()
+	httpSink := &TestMockSink{name: "http"}
+	registry.Register("http", httpSink)
+
+	matchCh := make(chan *domain.MatchedEvent, 1)
+	disp := New(matchCh, 1, registry, logger)
+
+	matched := &domain.MatchedEvent{
+		Event: &domain.Event{
+			ID:     "test-event-1",
+			Type:   "test",
+			Source: "test-source",
+		},
+		Rule: &domain.Rule{
+			ID:       uuid.New(),
+			SinkType: "unknown",
+		},
+	}
+
+	// Should not panic or error, just warn
+	disp.dispatch(context.Background(), matched, 0)
+
+	if httpSink.sendCalled {
+		t.Fatal("expected no sink to be called")
 	}
 }

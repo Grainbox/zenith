@@ -21,8 +21,9 @@ GCLOUD_REPO     ?= zenith
 GCLOUD_REGISTRY = $(GCLOUD_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCLOUD_REPO)
 GCLOUD_IMAGE    = $(GCLOUD_REGISTRY)/ingestor:latest
 
-# Database Migration string (Security check)
-MIGRATE_CMD = migrate -path deployments/db/migrations -database "$(DATABASE_URL)"
+# Database Migration — uses cockroachdb:// driver to avoid pg_advisory_lock() incompatibility
+MIGRATE_URL = $(subst postgresql://,cockroachdb://,$(subst postgres://,cockroachdb://,$(DATABASE_URL)))
+MIGRATE_CMD = migrate -path deployments/db/migrations -database "$(MIGRATE_URL)"
 
 .PHONY: all gen lint tidy migrate-up migrate-down build-kind build-docker push-gcloud build-push-gcloud help
 

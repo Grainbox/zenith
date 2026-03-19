@@ -68,6 +68,9 @@ func (p *Pipeline) Stop(ctx context.Context) error {
 	done := make(chan struct{})
 	go func() {
 		p.wg.Wait()
+		if p.dispatchCh != nil {
+			close(p.dispatchCh)
+		}
 		close(done)
 	}()
 

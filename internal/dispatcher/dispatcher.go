@@ -11,17 +11,17 @@ import (
 // Dispatcher reads matched events from a channel and forwards them to sinks.
 type Dispatcher struct {
 	matchCh     <-chan *domain.MatchedEvent
-	sinks       []Sink
+	registry    *Registry
 	workerCount int
 	logger      *slog.Logger
 	wg          sync.WaitGroup
 }
 
-// New creates a Dispatcher that reads from matchCh and dispatches to sinks.
-func New(matchCh <-chan *domain.MatchedEvent, workerCount int, sinks []Sink, logger *slog.Logger) *Dispatcher {
+// New creates a Dispatcher that reads from matchCh and dispatches to sinks via the registry.
+func New(matchCh <-chan *domain.MatchedEvent, workerCount int, registry *Registry, logger *slog.Logger) *Dispatcher {
 	return &Dispatcher{
 		matchCh:     matchCh,
-		sinks:       sinks,
+		registry:    registry,
 		workerCount: workerCount,
 		logger:      logger,
 	}
@@ -33,7 +33,7 @@ func (d *Dispatcher) Start(ctx context.Context) {
 		d.wg.Add(1)
 		go d.runWorker(ctx, i)
 	}
-	d.logger.Info("Dispatcher started", "worker_count", d.workerCount, "sink_count", len(d.sinks))
+	d.logger.Info("Dispatcher started", "worker_count", d.workerCount)
 }
 
 // Stop waits for all in-flight dispatches to complete within the deadline.
@@ -62,22 +62,30 @@ func (d *Dispatcher) runWorker(ctx context.Context, id int) {
 }
 
 func (d *Dispatcher) dispatch(ctx context.Context, matched *domain.MatchedEvent, workerID int) {
-	for _, sink := range d.sinks {
-		if err := sink.Send(ctx, matched); err != nil {
-			d.logger.Error("Sink dispatch failed",
-				"worker_id", workerID,
-				"sink", sink.Name(),
-				"event_id", matched.Event.ID,
-				"rule_id", matched.Rule.ID,
-				"error", err,
-			)
-		} else {
-			d.logger.Info("Event dispatched",
-				"worker_id", workerID,
-				"sink", sink.Name(),
-				"event_id", matched.Event.ID,
-				"rule_id", matched.Rule.ID,
-			)
-		}
+	sink, ok := d.registry.Resolve(matched.Rule.SinkType)
+	if !ok {
+		d.logger.Warn("No sink registered for type",
+			"sink_type", matched.Rule.SinkType,
+			"rule_id", matched.Rule.ID,
+			"event_id", matched.Event.ID,
+		)
+		return
+	}
+
+	if err := sink.Send(ctx, matched); err != nil {
+		d.logger.Error("Sink dispatch failed",
+			"worker_id", workerID,
+			"sink", sink.Name(),
+			"event_id", matched.Event.ID,
+			"rule_id", matched.Rule.ID,
+			"error", err,
+		)
+	} else {
+		d.logger.Info("Event dispatched",
+			"worker_id", workerID,
+			"sink", sink.Name(),
+			"event_id", matched.Event.ID,
+			"rule_id", matched.Rule.ID,
+		)
 	}
 }

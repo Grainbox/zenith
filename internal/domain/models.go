@@ -24,6 +24,7 @@ type Rule struct {
 	Name         string          `json:"name"`
 	Condition    json.RawMessage `json:"condition"` // Flexible JSON logic
 	TargetAction string          `json:"target_action"`
+	SinkType     string          `json:"sink_type"` // e.g. "discord", "http"
 	IsActive     bool            `json:"is_active"`
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`

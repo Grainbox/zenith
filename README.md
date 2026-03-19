@@ -1,10 +1,62 @@
-# Zenith — Distributed Event Observer
+# Zenith — Event Routing Middleware
 
 [![Go Version](https://img.shields.io/badge/go-1.26+-blue.svg)](https://golang.org/doc/devel/release.html)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green.svg)](https://github.com/Grainbox/zenith/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> A high-performance, Cloud-Native backend platform that ingests event streams, evaluates them against dynamic business rules stored in CockroachDB, and dispatches actions to external sinks.
+> Route events from any source to any target based on business rules stored in the database — without touching your application code.
+
+---
+
+## The Problem
+
+Your backend emits events. You want to react to certain ones: notify a team, trigger a downstream service, flag something for review. The naive approach is to hardcode these reactions directly in your service:
+
+```go
+// In your payment service
+if payment.Amount > 2000 {
+    notifyComplianceTeam(payment)
+}
+if payment.Country == "NG" {
+    alertFraudTeam(payment)
+}
+```
+
+This breaks down quickly:
+- A threshold changes → code change + redeploy
+- A new team needs a different rule → more hardcoded conditions
+- 10 services each have their own notification logic → no central visibility
+
+**Zenith extracts routing logic from your code and stores it in a database.** Your services just emit events. Zenith evaluates and routes.
+
+### Concrete Example
+
+A payment platform processes 50,000 transactions/hour. Compliance, fraud, and finance each have routing requirements that change weekly. Instead of redeploying the payment service every time, they insert rows into Zenith's `rules` table:
+
+| Rule | Condition | Target |
+|---|---|---|
+| High-value alert | `amount > 2000` | `https://compliance.internal/webhook` |
+| Restricted country | `country == "NG"` | `https://fraud-team.slack-webhook.com/...` |
+| FX exposure | `currency != "USD"` | `https://fx-desk.internal/notify` |
+
+Adding a new rule:
+```sql
+INSERT INTO rules (source_id, name, condition, target_action, is_active)
+VALUES (..., 'vip-customer-alert', '{"field":"user_tier","operator":"==","value":"VIP"}',
+        'https://crm.internal/vip-hook', true);
+```
+
+No code change. No deploy. The rule is active immediately.
+
+### How It Differs from Zapier / n8n
+
+Zapier and n8n are no-code SaaS tools for connecting consumer applications (Gmail → Notion, Stripe → Slack). They are designed for low-frequency, user-triggered workflows and cannot handle high-throughput backend event streams.
+
+Zenith is backend infrastructure, embedded in your own architecture:
+- Handles **millions of events/hour** via gRPC with a concurrent worker pool
+- Rules are managed **programmatically** (SQL/API), not via a UI
+- **Self-hosted** in your Kubernetes cluster — no per-action cost, no vendor lock-in
+- **Sub-millisecond routing decisions** using in-process Go channels
 
 ---
 

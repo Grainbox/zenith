@@ -16,6 +16,7 @@ import (
 	"connectrpc.com/grpcreflect"
 	"github.com/Grainbox/zenith/internal/config"
 	"github.com/Grainbox/zenith/internal/dispatcher"
+	"github.com/Grainbox/zenith/internal/dispatcher/sinks"
 	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/engine"
 	"github.com/Grainbox/zenith/internal/gateway"
@@ -46,7 +47,7 @@ func main() {
 func run() error {
 	logger := setupLogger()
 
-	cfg, err := config.Load()
+	cfg, err := config.Load("ingestor", "8080")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -140,8 +141,13 @@ func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) (*engine
 	matchCh := make(chan *domain.MatchedEvent, 256)
 	pipeline.SetDispatcher(matchCh)
 
-	sinks := []dispatcher.Sink{dispatcher.NoopSink{}}
-	disp := dispatcher.New(matchCh, 4, sinks, logger)
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+
+	registry := dispatcher.NewRegistry()
+	registry.Register("http", sinks.NewHttpSink(httpClient))
+	registry.Register("discord", sinks.NewDiscordSink(httpClient))
+
+	disp := dispatcher.New(matchCh, 4, registry, logger)
 
 	return pipeline, disp
 }

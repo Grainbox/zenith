@@ -55,12 +55,24 @@
         *   `internal/dispatcher/` package with its own graceful shutdown logic (mirroring the Ingestor pattern).
     *   **Status:** [x] Completed
 
-*   **[Issue-602] External Sinks Integration (Slack & Webhooks)**
-    *   **Description:** Implement at least two sink adapters in the Dispatcher: one for Slack (via Incoming Webhook URL) and one for a generic HTTP webhook. Each adapter reads its target URL from environment variables.
+*   **[Issue-601B] Sink Config Cleanup**
+    *   **Description:** Remove all sink-related environment variables (`DISPATCH_SINK_SLACK_URL`, `SLACK_WEBHOOK_URL`) from config, infrastructure files, and documentation. Establishes the architectural principle: sink target URLs are data-driven (from `rule.TargetAction`), not configuration.
     *   **Deliverables:**
-        *   `internal/dispatcher/sinks/slack.go` and `internal/dispatcher/sinks/webhook.go`.
-        *   Unit tests for each sink using an `httptest.Server` as the mock target.
-    *   **Status:** [ ] Pending
+        *   `DispatcherConfig` struct removed from `internal/config/config.go`.
+        *   All infra files (K8s secrets, Terraform) updated — only `DATABASE_URL` and `API_KEY_SALT` remain as managed secrets.
+        *   CLAUDE.md, README.md, and plan documents updated to reflect the principle.
+    *   **Status:** [x] Completed
+
+*   **[Issue-602] Platform Sinks (Discord + extensible architecture)**
+    *   **Description:** Implement the Discord sink for the portfolio demo, and establish the architecture that makes adding future platforms (Slack, Teams, etc.) a one-file addition without touching the Dispatcher core. Each sink formats its payload differently but implements the same `Sink` interface. The target URL always comes from `rule.TargetAction` — never from config.
+    *   **Sink selection:** Add a `sink_type` column (`text`, e.g. `"discord"`, `"slack"`, `"http"`) to the `rules` table. The Dispatcher resolves the correct `Sink` implementation from a registry keyed by `sink_type` at startup. Adding a new platform = implement `Sink`, register it — zero changes to the Dispatcher core.
+    *   **Deliverables:**
+        *   DB migration: `sink_type text NOT NULL DEFAULT 'http'` column on `rules`.
+        *   `internal/dispatcher/sinks/discord.go` — formats payload as `{"content": "..."}` and POSTs to `rule.TargetAction`.
+        *   `internal/dispatcher/sinks/http.go` — generic fallback, POSTs raw matched event JSON.
+        *   Sink registry in `internal/dispatcher/registry.go` — maps `sink_type` string to `Sink` implementation.
+        *   Unit tests for `DiscordSink` using `httptest.Server` (success, non-2xx, timeout).
+    *   **Status:** [x] Completed
 
 *   **[Issue-603] Audit Log Write-Back**
     *   **Description:** After the Dispatcher forwards a matched event to a sink, write a record to the `audit_logs` table (success/failure, sink target, timestamp). This closes the observability loop started with the schema in Issue-302.

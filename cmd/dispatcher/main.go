@@ -13,6 +13,7 @@ import (
 
 	"github.com/Grainbox/zenith/internal/config"
 	"github.com/Grainbox/zenith/internal/dispatcher"
+	"github.com/Grainbox/zenith/internal/dispatcher/sinks"
 	"github.com/Grainbox/zenith/internal/domain"
 )
 
@@ -36,28 +37,23 @@ func main() {
 func run() error {
 	logger := setupLogger()
 
-	cfg, err := config.Load()
+	cfg, err := config.Load("dispatcher", "8081")
 	if err != nil {
 		return err
 	}
-	_ = cfg // Sink target URLs come from rule.TargetAction at runtime — not from cfg
 
 	matchCh := make(chan *domain.MatchedEvent, matchBufSize)
 
-	sinks := []dispatcher.Sink{
-		dispatcher.NoopSink{},
-	}
+	httpClient := &http.Client{Timeout: 10 * time.Second}
 
-	d := dispatcher.New(matchCh, 4, sinks, logger)
+	registry := dispatcher.NewRegistry()
+	registry.Register("http", sinks.NewHttpSink(httpClient))
+	registry.Register("discord", sinks.NewDiscordSink(httpClient))
+
+	d := dispatcher.New(matchCh, 4, registry, logger)
 	d.Start(context.Background())
 
-	// Default to 8081 to avoid conflict with the ingestor (8080) when both
-	// run locally without explicit env vars. In Kubernetes, each pod sets PORT.
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8081"
-	}
-	serverAddr := ":" + port
+	serverAddr := ":" + cfg.Port
 	server := setupHTTPServer(serverAddr)
 
 	stop := make(chan os.Signal, 1)

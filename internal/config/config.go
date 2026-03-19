@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -37,7 +38,11 @@ type Config struct {
 
 // Load loads the configuration from environment variables.
 // It attempts to load .env.config, and .env.secrets files if present.
-func Load() (*Config, error) {
+// component is the service name (e.g. "ingestor", "dispatcher"); it is used to
+// derive a service-specific port env var (e.g. INGESTOR_PORT) that takes
+// precedence over the generic PORT variable. defaultPort is used when neither
+// is set.
+func Load(component, defaultPort string) (*Config, error) {
 	// Load environment variables from files.
 	// Order: .env.config and .env.secrets
 	_ = godotenv.Load(".env.config", ".env.secrets")
@@ -47,9 +52,13 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
 	}
 
-	port := os.Getenv("PORT")
+	portKey := strings.ToUpper(component) + "_PORT"
+	port := os.Getenv(portKey)
 	if port == "" {
-		port = "8080" // Default port
+		port = os.Getenv("PORT")
+	}
+	if port == "" {
+		port = defaultPort
 	}
 
 	maxOpen := parseEnvInt("DB_MAX_OPEN_CONNS", 25)
