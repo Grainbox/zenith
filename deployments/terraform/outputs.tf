@@ -1,6 +1,11 @@
 output "service_url" {
-  description = "Public URL of the Cloud Run service"
+  description = "Public URL of the Ingestor Cloud Run service"
   value       = google_cloud_run_v2_service.ingestor.uri
+}
+
+output "dispatcher_url" {
+  description = "Internal URL of the Dispatcher Cloud Run service"
+  value       = google_cloud_run_v2_service.dispatcher.uri
 }
 
 output "registry_url" {

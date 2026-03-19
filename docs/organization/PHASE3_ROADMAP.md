@@ -93,7 +93,16 @@
     *   **Deliverables:**
         *   `livenessProbe` and `readinessProbe` configured in both Deployment manifests.
         *   LoadBalancer `Service` for the Ingestor exposing the gRPC + HTTP gateway ports.
-    *   **Status:** [ ] Pending
+    *   **Status:** [x] Completed
+
+*   **[Issue-605B] Cloud Deployment — Dispatcher Binary**
+    *   **Description:** The Dispatcher binary exists locally (Issue-604) but is invisible to the cloud pipeline. The CI/CD workflow only builds and pushes the `ingestor` image; Terraform only provisions one Cloud Run service. This issue closes that gap so the full pipeline runs on GCP, not just in the local Kind cluster.
+    *   **Deliverables:**
+        *   `.github/workflows/deploy.yml` — `build-push` job builds and pushes `Dockerfile.dispatcher` → `dispatcher:${SHA}` and `dispatcher:latest` to Artifact Registry, in parallel with the ingestor build.
+        *   `deployments/terraform/cloud_run.tf` — `google_cloud_run_v2_service.dispatcher` resource: internal-only ingress (`INGRESS_TRAFFIC_INTERNAL_ONLY`), `DATABASE_URL` from Secret Manager, startup and liveness probes on `/healthz:8081`, shared `zenith_runner` service account (no new IAM needed).
+        *   `deployments/terraform/outputs.tf` — `dispatcher_url` output for debugging and Issue-606 validation.
+    *   **Note:** The Dispatcher must **not** be publicly invokable — unlike the Ingestor, it is a background worker. External traffic must be blocked at the IAM level (`allUsers` invoker role must NOT be added).
+    *   **Status:** [x] Completed
 
 *   **[Issue-606] Level 3 Final Validation (Milestone)**
     *   **Description:** End-to-end smoke test on the live cloud deployment. Push a commit to `main`, watch the CI/CD pipeline deploy automatically, send a webhook event to the public URL, verify the Rule Engine evaluates it, and confirm the Dispatcher forwards it to a Slack channel with a matching `audit_log` row written to CockroachDB.

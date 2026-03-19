@@ -99,3 +99,84 @@ resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+resource "google_cloud_run_v2_service" "dispatcher" {
+  name                = "zenith-dispatcher-${var.environment}"
+  location            = var.region
+  deletion_protection = false
+
+  # Internal-only: the Dispatcher is a background worker, not a public API.
+  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+
+  client = "terraform"
+
+  template {
+    service_account = google_service_account.zenith_runner.email
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 1
+    }
+
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/zenith/dispatcher:${var.image_tag}"
+
+      ports {
+        container_port = var.dispatcher_port
+      }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "256Mi"
+        }
+        cpu_idle = true
+      }
+
+      env {
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.zenith_secrets["DATABASE_URL"].secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "API_KEY_SALT"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.zenith_secrets["API_KEY_SALT"].secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      startup_probe {
+        http_get {
+          path = "/healthz"
+          port = var.dispatcher_port
+        }
+        initial_delay_seconds = 5
+        period_seconds        = 5
+        failure_threshold     = 10
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/healthz"
+          port = var.dispatcher_port
+        }
+        initial_delay_seconds = 10
+        period_seconds        = 30
+        failure_threshold     = 3
+      }
+    }
+  }
+
+  depends_on = [
+    google_project_service.services,
+    google_secret_manager_secret_iam_member.zenith_runner_access,
+  ]
+}

@@ -110,7 +110,7 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      - name: Build Docker image
+      - name: Build Ingestor image
         run: |
           docker build \
             -f build/package/Dockerfile \
@@ -119,10 +119,21 @@ jobs:
             -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/ingestor:latest \
             .
 
-      - name: Push Docker image
+      - name: Build Dispatcher image
+        run: |
+          docker build \
+            -f build/package/Dockerfile.dispatcher \
+            --build-arg COMMIT_HASH=${{ env.IMAGE_TAG }} \
+            -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/dispatcher:${{ env.IMAGE_TAG }} \
+            -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/dispatcher:latest \
+            .
+
+      - name: Push images
         run: |
           docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/ingestor:${{ env.IMAGE_TAG }}
           docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/ingestor:latest
+          docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/dispatcher:${{ env.IMAGE_TAG }}
+          docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/zenith/dispatcher:latest
 
   # ──────────────────────────────────────────────────────────────────
   # Job 4: Deploy — terraform apply avec le nouveau tag d'image
