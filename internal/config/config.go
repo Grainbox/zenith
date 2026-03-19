@@ -28,12 +28,19 @@ type EngineConfig struct {
 	EventBufferSize int
 }
 
+// TelemetryConfig holds OpenTelemetry tracing settings.
+type TelemetryConfig struct {
+	OTLPEndpoint string
+	ServiceName  string
+}
+
 // Config holds the application configuration.
 type Config struct {
-	Port     string
-	Database DatabaseConfig
-	Secrets  SecretsConfig
-	Engine   EngineConfig
+	Port      string
+	Database  DatabaseConfig
+	Secrets   SecretsConfig
+	Engine    EngineConfig
+	Telemetry TelemetryConfig
 }
 
 // Load loads the configuration from environment variables.
@@ -68,6 +75,12 @@ func Load(component, defaultPort string) (*Config, error) {
 	workerCount := parseEnvInt("ENGINE_WORKER_COUNT", 10)
 	bufferSize := parseEnvInt("ENGINE_BUFFER_SIZE", 1024)
 
+	otlpEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	serviceName := os.Getenv("OTEL_SERVICE_NAME")
+	if serviceName == "" {
+		serviceName = component
+	}
+
 	return &Config{
 		Port: port,
 		Database: DatabaseConfig{
@@ -81,6 +94,10 @@ func Load(component, defaultPort string) (*Config, error) {
 		Engine: EngineConfig{
 			WorkerCount:     workerCount,
 			EventBufferSize: bufferSize,
+		},
+		Telemetry: TelemetryConfig{
+			OTLPEndpoint: otlpEndpoint,
+			ServiceName:  serviceName,
 		},
 	}, nil
 }

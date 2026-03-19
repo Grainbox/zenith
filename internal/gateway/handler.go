@@ -13,6 +13,8 @@ import (
 	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/engine"
 	"github.com/Grainbox/zenith/internal/repository"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 // PipelineEnqueuer is the interface for enqueuing events to the pipeline.
@@ -140,6 +142,11 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 		Payload:   payload,
 		Timestamp: time.Now().UTC(),
 	}
+
+	// Inject trace context into event for propagation to async workers
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+	domainEvent.TraceContext = map[string]string(carrier)
 
 	// Enqueue to pipeline
 	if err := g.pipeline.Enqueue(domainEvent); err != nil {

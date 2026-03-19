@@ -9,6 +9,10 @@ import (
 
 	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/repository"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Dispatcher reads matched events from a channel and forwards them to sinks.
@@ -67,16 +71,34 @@ func (d *Dispatcher) runWorker(ctx context.Context, id int) {
 }
 
 func (d *Dispatcher) dispatch(ctx context.Context, matched *domain.MatchedEvent, workerID int) {
+	// Use the trace context from the matched event if available
+	if matched.Ctx != nil {
+		ctx = matched.Ctx
+	}
+
+	tracer := otel.Tracer("zenith/dispatcher")
+	ctx, span := tracer.Start(ctx, "dispatcher.dispatch",
+		trace.WithAttributes(
+			attribute.String("event.id", matched.Event.ID),
+			attribute.String("rule.id", matched.Rule.ID.String()),
+			attribute.String("sink.type", matched.Rule.SinkType),
+		),
+	)
+	defer span.End()
+
 	start := time.Now()
 
 	sink, ok := d.registry.Resolve(matched.Rule.SinkType)
 	if !ok {
+		err := fmt.Errorf("unknown sink type: %s", matched.Rule.SinkType)
 		d.logger.Warn("No sink registered for type",
 			"sink_type", matched.Rule.SinkType,
 			"rule_id", matched.Rule.ID,
 			"event_id", matched.Event.ID,
 		)
-		d.writeAuditLog(ctx, matched, time.Since(start), fmt.Errorf("unknown sink type: %s", matched.Rule.SinkType))
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		d.writeAuditLog(ctx, matched, time.Since(start), err)
 		return
 	}
 
@@ -89,6 +111,8 @@ func (d *Dispatcher) dispatch(ctx context.Context, matched *domain.MatchedEvent,
 			"rule_id", matched.Rule.ID,
 			"error", err,
 		)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	} else {
 		d.logger.Info("Event dispatched",
 			"worker_id", workerID,
@@ -101,6 +125,15 @@ func (d *Dispatcher) dispatch(ctx context.Context, matched *domain.MatchedEvent,
 }
 
 func (d *Dispatcher) writeAuditLog(ctx context.Context, matched *domain.MatchedEvent, latency time.Duration, dispatchErr error) {
+	tracer := otel.Tracer("zenith/dispatcher")
+	ctx, span := tracer.Start(ctx, "dispatcher.write_audit_log",
+		trace.WithAttributes(
+			attribute.String("event.id", matched.Event.ID),
+			attribute.Int64("latency_ms", latency.Milliseconds()),
+		),
+	)
+	defer span.End()
+
 	sourceID := matched.Rule.SourceID
 	log := &domain.AuditLog{
 		EventID:             matched.Event.ID,
@@ -111,8 +144,10 @@ func (d *Dispatcher) writeAuditLog(ctx context.Context, matched *domain.MatchedE
 		log.Status = "FAILED"
 		msg := dispatchErr.Error()
 		log.ErrorMessage = &msg
+		span.SetAttributes(attribute.String("audit.status", "FAILED"))
 	} else {
 		log.Status = "SUCCESS"
+		span.SetAttributes(attribute.String("audit.status", "SUCCESS"))
 	}
 
 	if err := d.auditLog.Create(ctx, log); err != nil {
@@ -121,5 +156,6 @@ func (d *Dispatcher) writeAuditLog(ctx context.Context, matched *domain.MatchedE
 			"rule_id", matched.Rule.ID,
 			"error", err,
 		)
+		span.RecordError(err)
 	}
 }

@@ -2,6 +2,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -32,11 +33,12 @@ type Rule struct {
 
 // Event represents a normalized, domain-level event ready for processing.
 type Event struct {
-	ID        string    `json:"id"`
-	Type      string    `json:"type"`
-	Source    string    `json:"source"`
-	Payload   []byte    `json:"payload"`
-	Timestamp time.Time `json:"timestamp"`
+	ID           string            `json:"id"`
+	Type         string            `json:"type"`
+	Source       string            `json:"source"`
+	Payload      []byte            `json:"payload"`
+	Timestamp    time.Time         `json:"timestamp"`
+	TraceContext map[string]string `json:"-"` // W3C trace propagation carrier
 }
 
 // Condition represents a filtering rule condition (JSON DSL).
@@ -51,6 +53,7 @@ type Condition struct {
 type MatchedEvent struct {
 	Event *Event
 	Rule  *Rule
+	Ctx   context.Context // Trace context propagated from gateway
 }
 
 // AuditLog records the outcome of a single dispatch attempt.

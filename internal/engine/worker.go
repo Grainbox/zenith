@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/Grainbox/zenith/internal/domain"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // runWorker processes events from the pipeline's event channel.
@@ -16,6 +20,19 @@ func (p *Pipeline) runWorker(ctx context.Context, id int) {
 
 // processEvent handles a single event by evaluating it against rules and dispatching matches.
 func (p *Pipeline) processEvent(ctx context.Context, event *domain.Event, workerID int) {
+	// Restore trace context from the event carrier
+	carrier := propagation.MapCarrier(event.TraceContext)
+	ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
+
+	tracer := otel.Tracer("zenith/engine")
+	ctx, span := tracer.Start(ctx, "engine.process_event",
+		trace.WithAttributes(
+			attribute.String("event.id", event.ID),
+			attribute.String("event.source", event.Source),
+		),
+	)
+	defer span.End()
+
 	matched, err := p.evaluator.Evaluate(ctx, event)
 	if err != nil {
 		p.logger.Error("Failed to evaluate event",
@@ -31,7 +48,7 @@ func (p *Pipeline) processEvent(ctx context.Context, event *domain.Event, worker
 		if p.dispatchCh == nil {
 			continue
 		}
-		me := &domain.MatchedEvent{Event: event, Rule: rule}
+		me := &domain.MatchedEvent{Event: event, Rule: rule, Ctx: ctx}
 		select {
 		case p.dispatchCh <- me:
 		default:

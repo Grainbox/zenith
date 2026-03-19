@@ -8,6 +8,8 @@ import (
 
 	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/repository"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // Evaluator evaluates events against rules from the database.
@@ -29,6 +31,10 @@ func NewEvaluator(ruleRepo repository.RuleRepository, sourceRepo repository.Sour
 // Evaluate evaluates an event against all active rules for its source.
 // Returns the list of matching rules or an error if source not found.
 func (e *Evaluator) Evaluate(ctx context.Context, event *domain.Event) ([]*domain.Rule, error) {
+	tracer := otel.Tracer("zenith/engine")
+	ctx, span := tracer.Start(ctx, "engine.evaluate_rules")
+	defer span.End()
+
 	// Resolve source name to UUID
 	source, err := e.sourceRepo.GetByName(ctx, event.Source)
 	if err != nil {
@@ -78,6 +84,11 @@ func (e *Evaluator) Evaluate(ctx context.Context, event *domain.Event) ([]*domai
 			"source_id", source.ID,
 		)
 	}
+
+	span.SetAttributes(
+		attribute.Int("rules.total", len(rules)),
+		attribute.Int("rules.matched", len(matched)),
+	)
 
 	if len(matched) == 0 {
 		e.logger.Debug("No rules matched",

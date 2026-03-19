@@ -23,7 +23,9 @@ import (
 	"github.com/Grainbox/zenith/internal/ingestor"
 	"github.com/Grainbox/zenith/internal/repository/postgres"
 	"github.com/Grainbox/zenith/internal/storage"
+	"github.com/Grainbox/zenith/internal/telemetry"
 	"github.com/Grainbox/zenith/pkg/pb/proto/v1/protov1connect"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -51,6 +53,21 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
+
+	shutdown, err := telemetry.Setup(context.Background(), telemetry.Config{
+		OTLPEndpoint: cfg.Telemetry.OTLPEndpoint,
+		ServiceName:  cfg.Telemetry.ServiceName,
+	})
+	if err != nil {
+		return fmt.Errorf("telemetry setup failed: %w", err)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if shutdownErr := shutdown(ctx); shutdownErr != nil {
+			logger.Error("Telemetry shutdown error", "error", shutdownErr)
+		}
+	}()
 
 	db, err := initDatabase(cfg.Database, logger)
 	if err != nil {
@@ -183,9 +200,16 @@ func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.P
 	mux.HandleFunc("POST /v1/events", gw.HandleIngestEvent)
 
 	serverAddr := ":" + cfg.Port
+
+	// Wrap mux with otelhttp for automatic span creation on incoming HTTP requests
+	otelHandler := otelhttp.NewHandler(
+		h2c.NewHandler(mux, &http2.Server{}),
+		"zenith-ingestor",
+	)
+
 	server := &http.Server{
 		Addr:              serverAddr,
-		Handler:           h2c.NewHandler(mux, &http2.Server{}),
+		Handler:           otelHandler,
 		ReadHeaderTimeout: readHeaderTimeout,
 	}
 
