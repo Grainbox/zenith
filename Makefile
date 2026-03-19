@@ -27,7 +27,7 @@ GCLOUD_IMAGE    = $(GCLOUD_REGISTRY)/ingestor:latest
 MIGRATE_URL = $(subst postgresql://,cockroachdb://,$(subst postgres://,cockroachdb://,$(DATABASE_URL)))
 MIGRATE_CMD = migrate -path deployments/db/migrations -database "$(MIGRATE_URL)"
 
-.PHONY: all gen lint tidy migrate-up migrate-down build-kind build-kind-dispatcher build-kind-all build-docker push-gcloud build-push-gcloud help
+.PHONY: all gen lint tidy migrate-up migrate-down build-kind build-kind-dispatcher build-kind-all build-docker push-gcloud build-push-gcloud install-metrics-server help
 
 all: lint gen tidy ## Run lint, generate code and tidy modules
 
@@ -38,6 +38,13 @@ migrate-up: ## Run database migrations up
 
 migrate-down: ## Run database migrations down (1 step)
 	$(MIGRATE_CMD) down 1
+
+## Kubernetes setup
+install-metrics-server: ## Install metrics-server in Kind cluster (run once after cluster creation)
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+	kubectl patch deployment metrics-server -n kube-system --type='json' -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+	kubectl rollout status deployment/metrics-server -n kube-system --timeout=60s
+	@echo "✅ metrics-server ready"
 
 ## Docker builds
 build-docker: ## Build Docker image locally
@@ -65,7 +72,8 @@ build-kind: ## Build Docker image and load into local Kind cluster
 	kubectl apply -f deployments/k8s/local/secrets.yaml -n zenith-dev
 	kubectl apply -f deployments/k8s/local/ingestor-deployment.yml -n zenith-dev
 	kubectl apply -f deployments/k8s/local/ingestor-service.yaml -n zenith-dev
-	@echo "✅ Deployment applied to zenith-dev namespace"
+	kubectl apply -f deployments/k8s/local/ingestor-hpa.yaml -n zenith-dev
+	@echo "✅ Deployment and HPA applied to zenith-dev namespace"
 	@echo "🕐 Waiting for deployment to be ready..."
 	kubectl rollout status deployment/zenith-ingestor-deployment -n zenith-dev --timeout=120s
 

@@ -142,7 +142,7 @@ metrics:
 - Demonstration: run a load test (`hey` or `k6`) and observe `kubectl get hpa -n zenith-dev` scaling the Ingestor from 1 → N replicas.
 - Document the scale-out behavior in `BENCHMARK.md` (Issue-802).
 
-**Status:** [ ] Pending
+**Status:** [x] Completed
 
 ---
 

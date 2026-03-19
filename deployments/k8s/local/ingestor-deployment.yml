@@ -41,10 +41,10 @@ spec:
         resources:
           requests:
             cpu: "100m"            # Reservation: scheduler allocates at least 0.1 CPU
-            memory: "256Mi"        # Reservation: scheduler allocates at least 256 MiB
+            memory: "64Mi"         # Reservation: scheduler allocates at least 64 MiB
           limits:
-            cpu: "1000m"           # Hard limit: CPU throttling after 1 core
-            memory: "512Mi"        # Hard limit: OOM killed if exceeded
+            cpu: "500m"            # Hard limit: CPU throttling after 0.5 cores
+            memory: "256Mi"        # Hard limit: OOM killed if exceeded
 
         # Startup probe: give time for application to bootstrap (DB connection, migrations, etc.)
         startupProbe:
