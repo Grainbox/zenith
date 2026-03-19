@@ -18,7 +18,7 @@ resource "google_cloud_run_v2_service" "ingestor" {
 
       ports {
         name           = "h2c"
-        container_port = var.port
+        container_port = var.ingestor_port
       }
 
       resources {
@@ -66,7 +66,7 @@ resource "google_cloud_run_v2_service" "ingestor" {
       liveness_probe {
         http_get {
           path = "/healthz"
-          port = var.port
+          port = var.ingestor_port
         }
         initial_delay_seconds = 10
         period_seconds        = 30
@@ -77,7 +77,7 @@ resource "google_cloud_run_v2_service" "ingestor" {
       startup_probe {
         http_get {
           path = "/healthz"
-          port = var.port
+          port = var.ingestor_port
         }
         initial_delay_seconds = 5
         period_seconds        = 5

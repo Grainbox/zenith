@@ -57,10 +57,14 @@ build-kind: ## Build Docker image and load into local Kind cluster
 	@docker inspect zenith-ingestor:latest > /dev/null || (echo "❌ Failed to build image"; exit 1)
 	@echo "✅ Image built. Loading into Kind cluster..."
 	$(KIND_LOAD) || true
-	@echo "✅ Image loaded into Kind cluster"
-	kubectl delete pod zenith-ingestor -n zenith-dev --ignore-not-found
-	kubectl apply -f deployments/k8s/local/pod.yaml -n zenith-dev
-	@echo "✅ Pod deployed to zenith-dev namespace"
+	@echo "✅ Image loaded into Kind cluster. Deploying to K8s..."
+	kubectl apply -f deployments/k8s/local/namespace.yaml
+	kubectl apply -f deployments/k8s/local/config.yaml -n zenith-dev
+	kubectl apply -f deployments/k8s/local/secrets.yaml -n zenith-dev
+	kubectl apply -f deployments/k8s/local/ingestor-deployment.yml -n zenith-dev
+	@echo "✅ Deployment applied to zenith-dev namespace"
+	@echo "🕐 Waiting for deployment to be ready..."
+	kubectl rollout status deployment/zenith-ingestor-deployment -n zenith-dev --timeout=120s
 
 ## Tools: Code generation and Linting
 gen: ## Generate code from Protobuf files

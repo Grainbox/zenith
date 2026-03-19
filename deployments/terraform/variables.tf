@@ -21,10 +21,16 @@ variable "image_tag" {
   default     = "latest"
 }
 
-variable "port" {
-  description = "Service listening port"
+variable "ingestor_port" {
+  description = "Ingestor service listening port"
   type        = number
   default     = 8080
+}
+
+variable "dispatcher_port" {
+  description = "Dispatcher service listening port"
+  type        = number
+  default     = 8081
 }
 
 variable "db_max_open_conns" {
