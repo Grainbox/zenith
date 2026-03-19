@@ -114,10 +114,10 @@ func (g *Generator) Run(ctx context.Context) error {
 	wg.Wait()
 	close(errChan)
 
-	// Collect any errors
+	// Collect any errors, ignoring context cancellation (normal shutdown)
 	var lastErr error
 	for err := range errChan {
-		if err != nil {
+		if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 			lastErr = err
 			g.logger.Error("Worker error", "error", err)
 		}
