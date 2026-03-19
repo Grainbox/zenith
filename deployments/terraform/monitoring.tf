@@ -23,9 +23,8 @@
 output "monitoring_info" {
   description = "Monitoring configuration details"
   value = {
-    gmp_enabled    = true
-    workspace_name = google_monitoring_monitored_project.zenith.display_name
-    metrics_port   = 8082
-    note           = "For Cloud Run: metrics are pushed via OTEL (Issue-701). For K8s: use PodMonitoring CRD with GMP operator."
+    gmp_enabled  = true
+    metrics_port = 8082
+    note         = "For Cloud Run: metrics are pushed via OTEL (Issue-701). For K8s: use PodMonitoring CRD with GMP operator."
   }
 }
