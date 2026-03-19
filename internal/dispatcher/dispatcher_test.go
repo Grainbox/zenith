@@ -12,6 +12,11 @@ import (
 	"github.com/google/uuid"
 )
 
+// noopAuditLog satisfies repository.AuditLogRepository without any side effects.
+type noopAuditLog struct{}
+
+func (n *noopAuditLog) Create(_ context.Context, _ *domain.AuditLog) error { return nil }
+
 func TestDispatcherStartStop(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	matchCh := make(chan *domain.MatchedEvent, 10)
@@ -19,7 +24,7 @@ func TestDispatcherStartStop(t *testing.T) {
 	registry := NewRegistry()
 	registry.Register("http", &TestMockSink{name: "http"})
 
-	d := New(matchCh, 2, registry, logger)
+	d := New(matchCh, 2, registry, &noopAuditLog{}, logger)
 	d.Start(context.Background())
 
 	// Send an event
@@ -65,7 +70,7 @@ func TestDispatcherStopTimeout(t *testing.T) {
 	registry := NewRegistry()
 	registry.Register("slow", slowSink)
 
-	d := New(matchCh, 1, registry, logger)
+	d := New(matchCh, 1, registry, &noopAuditLog{}, logger)
 	d.Start(context.Background())
 
 	event := &domain.Event{
@@ -183,7 +188,7 @@ func TestDispatcher_Routes_To_Correct_Sink(t *testing.T) {
 	registry.Register("discord", discordSink)
 
 	matchCh := make(chan *domain.MatchedEvent, 1)
-	disp := New(matchCh, 1, registry, logger)
+	disp := New(matchCh, 1, registry, &noopAuditLog{}, logger)
 
 	matched := &domain.MatchedEvent{
 		Event: &domain.Event{
@@ -215,7 +220,7 @@ func TestDispatcher_Unknown_Sink_Type_Warns(t *testing.T) {
 	registry.Register("http", httpSink)
 
 	matchCh := make(chan *domain.MatchedEvent, 1)
-	disp := New(matchCh, 1, registry, logger)
+	disp := New(matchCh, 1, registry, &noopAuditLog{}, logger)
 
 	matched := &domain.MatchedEvent{
 		Event: &domain.Event{

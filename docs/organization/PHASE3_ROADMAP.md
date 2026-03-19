@@ -79,7 +79,7 @@
     *   **Deliverables:**
         *   `AuditLogRepository` implementation in `/internal/repository/postgres/`.
         *   Dispatcher writes one `audit_log` row per dispatched event.
-    *   **Status:** [ ] Pending
+    *   **Status:** [x] Completed
 
 *   **[Issue-604] Multi-Binary Kubernetes Manifests**
     *   **Description:** Create separate `Deployment` and `Service` manifests for the Ingestor and Dispatcher so they are independently deployable and scalable within the `zenith-dev` namespace.

@@ -30,3 +30,8 @@ type RuleRepository interface {
 	Update(ctx context.Context, rule *domain.Rule) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
+
+// AuditLogRepository defines the contract for audit log persistence.
+type AuditLogRepository interface {
+	Create(ctx context.Context, log *domain.AuditLog) error
+}

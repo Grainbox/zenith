@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,6 +17,8 @@ import (
 	"github.com/Grainbox/zenith/internal/dispatcher"
 	"github.com/Grainbox/zenith/internal/dispatcher/sinks"
 	"github.com/Grainbox/zenith/internal/domain"
+	"github.com/Grainbox/zenith/internal/repository/postgres"
+	"github.com/Grainbox/zenith/internal/storage"
 )
 
 const (
@@ -42,6 +46,16 @@ func run() error {
 		return err
 	}
 
+	db, err := initDatabase(cfg.Database, logger)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("Failed to close database connection", "error", err)
+		}
+	}()
+
 	matchCh := make(chan *domain.MatchedEvent, matchBufSize)
 
 	httpClient := &http.Client{Timeout: 10 * time.Second}
@@ -50,7 +64,8 @@ func run() error {
 	registry.Register("http", sinks.NewHttpSink(httpClient))
 	registry.Register("discord", sinks.NewDiscordSink(httpClient))
 
-	d := dispatcher.New(matchCh, 4, registry, logger)
+	auditLogRepo := postgres.NewAuditLogRepo(db)
+	d := dispatcher.New(matchCh, 4, registry, auditLogRepo, logger)
 	d.Start(context.Background())
 
 	serverAddr := ":" + cfg.Port
@@ -94,6 +109,19 @@ func setupLogger() *slog.Logger {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 	return logger
+}
+
+func initDatabase(cfg config.DatabaseConfig, logger *slog.Logger) (*sql.DB, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db, err := storage.NewDatabase(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	logger.Info("Database connected successfully")
+	return db, nil
 }
 
 func setupHTTPServer(addr string) *http.Server {

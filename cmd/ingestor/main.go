@@ -147,7 +147,8 @@ func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) (*engine
 	registry.Register("http", sinks.NewHttpSink(httpClient))
 	registry.Register("discord", sinks.NewDiscordSink(httpClient))
 
-	disp := dispatcher.New(matchCh, 4, registry, logger)
+	auditLogRepo := postgres.NewAuditLogRepo(db)
+	disp := dispatcher.New(matchCh, 4, registry, auditLogRepo, logger)
 
 	return pipeline, disp
 }

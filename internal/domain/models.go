@@ -52,3 +52,14 @@ type MatchedEvent struct {
 	Event *Event
 	Rule  *Rule
 }
+
+// AuditLog records the outcome of a single dispatch attempt.
+type AuditLog struct {
+	ID                  uuid.UUID  `json:"id"`
+	EventID             string     `json:"event_id"`
+	SourceID            *uuid.UUID `json:"source_id"` // nullable (ON DELETE SET NULL)
+	Status              string     `json:"status"`    // "SUCCESS" | "FAILED"
+	ProcessingLatencyMs int64      `json:"processing_latency_ms"`
+	ErrorMessage        *string    `json:"error_message,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+}
