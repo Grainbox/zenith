@@ -105,8 +105,9 @@
     *   **Status:** [x] Completed
 
 *   **[Issue-606] Level 3 Final Validation (Milestone)**
-    *   **Description:** End-to-end smoke test on the live cloud deployment. Push a commit to `main`, watch the CI/CD pipeline deploy automatically, send a webhook event to the public URL, verify the Rule Engine evaluates it, and confirm the Dispatcher forwards it to a Slack channel with a matching `audit_log` row written to CockroachDB.
+    *   **Description:** End-to-end smoke test on the live cloud deployment. Push a commit to `main`, watch the CI/CD pipeline deploy automatically, send a webhook event to the public URL, verify the Rule Engine evaluates it, and confirm the Dispatcher forwards it to a Discord channel with a matching `audit_log` row written to CockroachDB.
     *   **Deliverables:**
         *   Public URL accessible and returning a valid response.
-        *   Screenshot or log of: incoming event → rule match → Slack notification → audit_log row.
-    *   **Status:** [ ] Pending
+        *   Screenshot or log of: incoming event → rule match → Discord notification → audit_log row.
+        *   Plan disponible dans `docs/organization/plans/ISSUE_606_FINAL_VALIDATION.md`
+    *   **Status:** [x] Completed
