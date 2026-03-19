@@ -1,0 +1,24 @@
+FROM golang:1.26-alpine AS builder
+
+RUN apk --no-network add ca-certificates
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+RUN go install github.com/bufbuild/buf/cmd/buf@latest
+
+COPY . .
+
+RUN $GOPATH/bin/buf generate
+
+ARG COMMIT_HASH=dev
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s -X main.commit=${COMMIT_HASH}" -o /zenith-dispatcher cmd/dispatcher/main.go
+
+FROM gcr.io/distroless/static-debian12
+COPY --from=builder /zenith-dispatcher /zenith-dispatcher
+
+EXPOSE 8081
+
+CMD ["/zenith-dispatcher"]

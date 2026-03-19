@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zenith-ingestor
+  labels:
+    app: zenith-ingestor
+spec:
+  type: ClusterIP
+  selector:
+    app: zenith-ingestor
+  ports:
+  - name: grpc-http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

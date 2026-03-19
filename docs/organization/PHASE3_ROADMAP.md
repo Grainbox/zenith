@@ -86,7 +86,7 @@
     *   **Deliverables:**
         *   `/deployments/k8s/local/dispatcher-deployment.yaml` and `dispatcher-service.yaml`.
         *   Both binaries deployable independently via `kubectl apply`.
-    *   **Status:** [ ] Pending
+    *   **Status:** [x] Completed
 
 *   **[Issue-605] [CKAD] Services & Liveness/Readiness Probes**
     *   **Description:** Expose the Ingestor and Dispatcher via Kubernetes `Service` resources (ClusterIP internal, LoadBalancer external). Add Liveness and Readiness probes to both Deployments to ensure zero-downtime and correct traffic routing during rolling updates.

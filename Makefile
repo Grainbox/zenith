@@ -13,6 +13,8 @@ BUF_LINT    = buf lint
 GO_TIDY     = go mod tidy
 DOCKER_CMD  = docker --context default build -t zenith-ingestor:latest -f build/package/Dockerfile .
 KIND_LOAD   = kind load docker-image zenith-ingestor:latest --name zenith-lab
+DOCKER_CMD_DISPATCHER = docker --context default build -t zenith-dispatcher:latest -f build/package/Dockerfile.dispatcher .
+KIND_LOAD_DISPATCHER  = kind load docker-image zenith-dispatcher:latest --name zenith-lab
 
 # GCloud Registry (update GCP_PROJECT_ID and GCLOUD_REGION as needed)
 GCP_PROJECT_ID  ?= zenith-490409
@@ -25,7 +27,7 @@ GCLOUD_IMAGE    = $(GCLOUD_REGISTRY)/ingestor:latest
 MIGRATE_URL = $(subst postgresql://,cockroachdb://,$(subst postgres://,cockroachdb://,$(DATABASE_URL)))
 MIGRATE_CMD = migrate -path deployments/db/migrations -database "$(MIGRATE_URL)"
 
-.PHONY: all gen lint tidy migrate-up migrate-down build-kind build-docker push-gcloud build-push-gcloud help
+.PHONY: all gen lint tidy migrate-up migrate-down build-kind build-kind-dispatcher build-kind-all build-docker push-gcloud build-push-gcloud help
 
 all: lint gen tidy ## Run lint, generate code and tidy modules
 
@@ -62,9 +64,25 @@ build-kind: ## Build Docker image and load into local Kind cluster
 	kubectl apply -f deployments/k8s/local/config.yaml -n zenith-dev
 	kubectl apply -f deployments/k8s/local/secrets.yaml -n zenith-dev
 	kubectl apply -f deployments/k8s/local/ingestor-deployment.yml -n zenith-dev
+	kubectl apply -f deployments/k8s/local/ingestor-service.yaml -n zenith-dev
 	@echo "✅ Deployment applied to zenith-dev namespace"
 	@echo "🕐 Waiting for deployment to be ready..."
 	kubectl rollout status deployment/zenith-ingestor-deployment -n zenith-dev --timeout=120s
+
+build-kind-dispatcher: ## Build Dispatcher image and load into local Kind cluster
+	@echo "🔨 Building Dispatcher Docker image..."
+	$(DOCKER_CMD_DISPATCHER)
+	@docker inspect zenith-dispatcher:latest > /dev/null || (echo "❌ Failed to build dispatcher image"; exit 1)
+	@echo "✅ Dispatcher image built. Loading into Kind cluster..."
+	$(KIND_LOAD_DISPATCHER) || true
+	@echo "✅ Dispatcher image loaded. Deploying to K8s..."
+	kubectl apply -f deployments/k8s/local/dispatcher-deployment.yaml -n zenith-dev
+	kubectl apply -f deployments/k8s/local/dispatcher-service.yaml -n zenith-dev
+	@echo "✅ Dispatcher deployment applied to zenith-dev namespace"
+	kubectl rollout status deployment/zenith-dispatcher-deployment -n zenith-dev --timeout=120s
+
+build-kind-all: build-kind build-kind-dispatcher ## Build and deploy all binaries to local Kind cluster
+	@echo "✅ Full stack deployed to zenith-dev namespace"
 
 ## Tools: Code generation and Linting
 gen: ## Generate code from Protobuf files
