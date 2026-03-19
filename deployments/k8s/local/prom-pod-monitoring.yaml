@@ -1,0 +1,25 @@
+# GCP Managed Prometheus (GMP) PodMonitoring CRD
+# Scrapes the zenith-ingestor metrics endpoint on port 8082
+#
+# Prerequisites:
+# - GMP operator must be installed: kubectl apply -f https://github.com/GoogleCloudPlatform/prometheus-engine/releases/latest/download/operator.yaml
+# - For local Kind cluster without GCP integration, this will log warnings but metrics endpoint remains accessible via port-forward
+#
+# Apply with:
+#   kubectl apply -f deployments/k8s/local/prom-pod-monitoring.yaml -n zenith-dev
+
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: zenith-ingestor-metrics
+  namespace: zenith-dev
+  labels:
+    app: zenith-ingestor
+spec:
+  selector:
+    matchLabels:
+      app: zenith-ingestor
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

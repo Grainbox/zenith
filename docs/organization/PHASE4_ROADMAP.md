@@ -95,11 +95,14 @@ Configure GCP Managed Prometheus (GMP) to scrape the Ingestor's `/metrics` endpo
 | Recent audit log failures | Direct CockroachDB query or log-based metric | Table |
 
 **Deliverables:**
-- `deployments/grafana/zenith-dashboard.json` committed to the repo.
+- `deployments/grafana/zenith-dashboard.json` committed to the repo. ✓
+- `deployments/terraform/monitoring.tf` with GCP monitoring APIs enabled. ✓
+- `deployments/k8s/local/prom-pod-monitoring.yaml` with GMP PodMonitoring CRD. ✓
+- `deployments/monitoring/docker-compose.yml` for local monitoring stack. ✓
 - Screenshot of the live dashboard with real data (from a smoke-test run) committed to `docs/assets/grafana-dashboard.png`.
 - `README.md` updated to link to the screenshot and explain how to import the dashboard.
 
-**Status:** [ ] Pending
+**Status:** [x] Completed
 
 ---
 

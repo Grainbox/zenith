@@ -1,0 +1,17 @@
+# Prometheus configuration for Zenith metrics scraping
+# Targets the Ingestor service metrics endpoint on port 8082
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: zenith-local
+    environment: dev
+
+scrape_configs:
+  - job_name: zenith-ingestor
+    static_configs:
+      - targets: ["host.docker.internal:8082"]
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
