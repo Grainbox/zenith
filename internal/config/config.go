@@ -32,6 +32,7 @@ type EngineConfig struct {
 type TelemetryConfig struct {
 	OTLPEndpoint string
 	ServiceName  string
+	MetricsPort  string
 }
 
 // Config holds the application configuration.
@@ -81,6 +82,11 @@ func Load(component, defaultPort string) (*Config, error) {
 		serviceName = component
 	}
 
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "8082"
+	}
+
 	return &Config{
 		Port: port,
 		Database: DatabaseConfig{
@@ -98,6 +104,7 @@ func Load(component, defaultPort string) (*Config, error) {
 		Telemetry: TelemetryConfig{
 			OTLPEndpoint: otlpEndpoint,
 			ServiceName:  serviceName,
+			MetricsPort:  metricsPort,
 		},
 	}, nil
 }

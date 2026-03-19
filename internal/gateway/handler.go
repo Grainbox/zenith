@@ -13,6 +13,7 @@ import (
 	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/engine"
 	"github.com/Grainbox/zenith/internal/repository"
+	"github.com/Grainbox/zenith/internal/telemetry"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 )
@@ -47,6 +48,7 @@ type Gateway struct {
 	logger     *slog.Logger
 	pipeline   PipelineEnqueuer
 	sourceRepo repository.SourceRepository
+	metrics    *telemetry.Metrics
 }
 
 // NewGateway creates a new Gateway.
@@ -54,11 +56,13 @@ func NewGateway(
 	logger *slog.Logger,
 	pipeline PipelineEnqueuer,
 	sourceRepo repository.SourceRepository,
+	metrics *telemetry.Metrics,
 ) *Gateway {
 	return &Gateway{
 		logger:     logger,
 		pipeline:   pipeline,
 		sourceRepo: sourceRepo,
+		metrics:    metrics,
 	}
 }
 
@@ -78,30 +82,39 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	var req IngestEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		if errors.Is(err, io.EOF) {
+			g.metrics.IncEventsRejected("unknown", telemetry.RejectReasonInvalidBody)
 			g.writeError(w, http.StatusBadRequest, "INVALID_JSON", "request body is empty")
 			return
 		}
+		g.metrics.IncEventsRejected("unknown", telemetry.RejectReasonInvalidBody)
 		g.writeError(w, http.StatusBadRequest, "INVALID_JSON", "failed to decode JSON: "+err.Error())
 		return
 	}
 
 	// Validate required fields
 	if req.EventID == "" {
+		g.metrics.IncEventsRejected("unknown", telemetry.RejectReasonInvalidBody)
 		g.writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "event_id is required")
 		return
 	}
 	if req.EventType == "" {
+		g.metrics.IncEventsRejected("unknown", telemetry.RejectReasonInvalidBody)
 		g.writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "event_type is required")
 		return
 	}
 	if req.Source == "" {
+		g.metrics.IncEventsRejected("unknown", telemetry.RejectReasonInvalidBody)
 		g.writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "source is required")
 		return
 	}
 
+	// At this point, we have all the required event fields, so record the received counter
+	g.metrics.IncEventsReceived(req.Source, req.EventType)
+
 	// Read API key from header
 	apiKey := r.Header.Get("X-Api-Key")
 	if apiKey == "" {
+		g.metrics.IncEventsRejected("unknown", telemetry.RejectReasonMissingAPIKey)
 		g.writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "X-Api-Key header is required")
 		return
 	}
@@ -113,6 +126,7 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 			g.writeError(w, http.StatusInternalServerError, "INTERNAL", "request context canceled")
 			return
 		}
+		g.metrics.IncEventsRejected("unknown", telemetry.RejectReasonInvalidAPIKey)
 		g.writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "invalid API key")
 		return
 	}
@@ -124,6 +138,7 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 			"got", req.Source,
 			"api_key", apiKey,
 		)
+		g.metrics.IncEventsRejected(source.Name, telemetry.RejectReasonSourceMismatch)
 		g.writeError(w, http.StatusForbidden, "PERMISSION_DENIED", "source name does not match authenticated source")
 		return
 	}
@@ -151,6 +166,7 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	// Enqueue to pipeline
 	if err := g.pipeline.Enqueue(domainEvent); err != nil {
 		if errors.Is(err, engine.ErrPipelineFull) {
+			g.metrics.IncEventsRejected(req.Source, telemetry.RejectReasonPipelineFull)
 			g.writeError(w, http.StatusServiceUnavailable, "RESOURCE_EXHAUSTED", "event pipeline queue is full")
 			return
 		}
@@ -161,6 +177,9 @@ func (g *Gateway) HandleIngestEvent(w http.ResponseWriter, r *http.Request) {
 		g.writeError(w, http.StatusInternalServerError, "INTERNAL", "failed to enqueue event")
 		return
 	}
+
+	// Record successful acceptance
+	g.metrics.IncEventsAccepted(req.Source)
 
 	// Log successful ingestion
 	g.logger.Info("Event received via gateway",

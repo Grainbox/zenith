@@ -77,7 +77,7 @@ func TestHandleIngestEvent_SuccessValidEvent(t *testing.T) {
 	}
 	mockRepo := &mockSourceRepository{source: source}
 	mockPipe := &mockPipeline{}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	body := IngestEventRequest{
 		EventID:   "evt-001",
@@ -111,7 +111,7 @@ func TestHandleIngestEvent_ErrorMissingEventType(t *testing.T) {
 	}
 	mockRepo := &mockSourceRepository{source: source}
 	mockPipe := &mockPipeline{}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	body := IngestEventRequest{
 		EventID: "evt-001",
@@ -144,7 +144,7 @@ func TestHandleIngestEvent_ErrorInvalidJSON(t *testing.T) {
 	}
 	mockRepo := &mockSourceRepository{source: source}
 	mockPipe := &mockPipeline{}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	req := newRequest("invalid json {")
 	req.Header.Set("X-Api-Key", "sk-test-123")
@@ -164,7 +164,7 @@ func TestHandleIngestEvent_ErrorMissingAPIKey(t *testing.T) {
 	logger := newTestLogger()
 	mockRepo := &mockSourceRepository{}
 	mockPipe := &mockPipeline{}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	body := IngestEventRequest{
 		EventID:   "evt-001",
@@ -192,7 +192,7 @@ func TestHandleIngestEvent_ErrorUnknownAPIKey(t *testing.T) {
 	logger := newTestLogger()
 	mockRepo := &mockSourceRepository{err: errors.New("source not found")}
 	mockPipe := &mockPipeline{}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	body := IngestEventRequest{
 		EventID:   "evt-001",
@@ -225,7 +225,7 @@ func TestHandleIngestEvent_ErrorSourceMismatch(t *testing.T) {
 	}
 	mockRepo := &mockSourceRepository{source: source}
 	mockPipe := &mockPipeline{}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	body := IngestEventRequest{
 		EventID:   "evt-001",
@@ -258,7 +258,7 @@ func TestHandleIngestEvent_ErrorPipelineFull(t *testing.T) {
 	}
 	mockRepo := &mockSourceRepository{source: source}
 	mockPipe := &mockPipeline{enqueueErr: engine.ErrPipelineFull}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	body := IngestEventRequest{
 		EventID:   "evt-001",
@@ -291,7 +291,7 @@ func TestHandleIngestEvent_ErrorBodyTooLarge(t *testing.T) {
 	}
 	mockRepo := &mockSourceRepository{source: source}
 	mockPipe := &mockPipeline{}
-	gw := NewGateway(logger, mockPipe, mockRepo)
+	gw := NewGateway(logger, mockPipe, mockRepo, nil)
 
 	// Create a body larger than 1 MB
 	largePayload := make([]byte, maxBodyBytes+1)

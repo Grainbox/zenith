@@ -110,7 +110,7 @@ func newStressEvaluator(t *testing.T) *Evaluator {
 	ruleRepo := NewMockRuleRepository()
 	ruleRepo.AddRules(sourceID, []*domain.Rule{rule})
 
-	return NewEvaluator(ruleRepo, srcRepo, logger)
+	return NewEvaluator(ruleRepo, srcRepo, logger, nil)
 }
 
 // TestPipelineStress_BurstConcurrency validates that the pipeline handles
@@ -123,7 +123,7 @@ func TestPipelineStress_BurstConcurrency(t *testing.T) {
 
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
 	evaluator := newStressEvaluator(t)
-	pipeline := New(workerCount, bufferSize, evaluator, logger)
+	pipeline := New(workerCount, bufferSize, evaluator, logger, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -181,7 +181,7 @@ func TestPipelineStress_PipelineFullBackpressure(t *testing.T) {
 
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
 	evaluator := newStressEvaluator(t)
-	pipeline := New(workerCount, bufferSize, evaluator, logger)
+	pipeline := New(workerCount, bufferSize, evaluator, logger, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

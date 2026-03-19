@@ -66,10 +66,10 @@ func TestIngestEvent(t *testing.T) {
 	// Create mock repos and evaluator
 	ruleRepo := &MockRuleRepo{}
 	sourceRepo := &MockSourceRepo{}
-	evaluator := engine.NewEvaluator(ruleRepo, sourceRepo, logger)
+	evaluator := engine.NewEvaluator(ruleRepo, sourceRepo, logger, nil)
 
 	// Create pipeline with evaluator
-	pipeline := engine.New(2, 10, evaluator, logger)
+	pipeline := engine.New(2, 10, evaluator, logger, nil)
 	server := NewServer(logger, pipeline)
 
 	t.Run("success - valid event", func(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/repository"
+	"github.com/Grainbox/zenith/internal/telemetry"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -22,17 +23,19 @@ type Dispatcher struct {
 	auditLog    repository.AuditLogRepository
 	workerCount int
 	logger      *slog.Logger
+	metrics     *telemetry.Metrics
 	wg          sync.WaitGroup
 }
 
 // New creates a Dispatcher that reads from matchCh and dispatches to sinks via the registry.
-func New(matchCh <-chan *domain.MatchedEvent, workerCount int, registry *Registry, auditLog repository.AuditLogRepository, logger *slog.Logger) *Dispatcher {
+func New(matchCh <-chan *domain.MatchedEvent, workerCount int, registry *Registry, auditLog repository.AuditLogRepository, logger *slog.Logger, metrics *telemetry.Metrics) *Dispatcher {
 	return &Dispatcher{
 		matchCh:     matchCh,
 		registry:    registry,
 		auditLog:    auditLog,
 		workerCount: workerCount,
 		logger:      logger,
+		metrics:     metrics,
 	}
 }
 
@@ -98,11 +101,15 @@ func (d *Dispatcher) dispatch(ctx context.Context, matched *domain.MatchedEvent,
 		)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		d.writeAuditLog(ctx, matched, time.Since(start), err)
+		elapsed := time.Since(start)
+		d.metrics.IncDispatch(matched.Rule.SinkType, "failed")
+		d.metrics.ObserveDispatchDuration(matched.Rule.SinkType, elapsed)
+		d.writeAuditLog(ctx, matched, elapsed, err)
 		return
 	}
 
 	err := sink.Send(ctx, matched)
+	elapsed := time.Since(start)
 	if err != nil {
 		d.logger.Error("Sink dispatch failed",
 			"worker_id", workerID,
@@ -113,6 +120,7 @@ func (d *Dispatcher) dispatch(ctx context.Context, matched *domain.MatchedEvent,
 		)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		d.metrics.IncDispatch(matched.Rule.SinkType, "failed")
 	} else {
 		d.logger.Info("Event dispatched",
 			"worker_id", workerID,
@@ -120,8 +128,10 @@ func (d *Dispatcher) dispatch(ctx context.Context, matched *domain.MatchedEvent,
 			"event_id", matched.Event.ID,
 			"rule_id", matched.Rule.ID,
 		)
+		d.metrics.IncDispatch(matched.Rule.SinkType, "success")
 	}
-	d.writeAuditLog(ctx, matched, time.Since(start), err)
+	d.metrics.ObserveDispatchDuration(matched.Rule.SinkType, elapsed)
+	d.writeAuditLog(ctx, matched, elapsed, err)
 }
 
 func (d *Dispatcher) writeAuditLog(ctx context.Context, matched *domain.MatchedEvent, latency time.Duration, dispatchErr error) {

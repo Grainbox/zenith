@@ -25,6 +25,9 @@ import (
 	"github.com/Grainbox/zenith/internal/storage"
 	"github.com/Grainbox/zenith/internal/telemetry"
 	"github.com/Grainbox/zenith/pkg/pb/proto/v1/protov1connect"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -81,11 +84,18 @@ func run() error {
 		}
 	}()
 
-	pipeline, disp := setupPipeline(cfg, db, logger)
+	// Initialize Prometheus metrics
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	reg.MustRegister(collectors.NewGoCollector())
+	metrics := telemetry.NewMetrics(reg)
+
+	pipeline, disp := setupPipeline(cfg, db, logger, metrics)
 	pipeline.Start(context.Background())
 	disp.Start(context.Background())
 
-	serverAddr, server := setupHTTPServer(cfg, logger, pipeline, db)
+	serverAddr, server := setupHTTPServer(cfg, logger, pipeline, db, metrics)
+	metricsServer := startMetricsServer(cfg.Telemetry.MetricsPort, logger, reg)
 
 	// Listen for shutdown signals
 	stop := make(chan os.Signal, 1)
@@ -109,6 +119,10 @@ func run() error {
 
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("HTTP server shutdown error", "error", err)
+	}
+
+	if err := metricsServer.Shutdown(ctx); err != nil {
+		logger.Error("Metrics server shutdown error", "error", err)
 	}
 
 	// Drain event pipeline and wait for workers to finish
@@ -135,6 +149,27 @@ func setupLogger() *slog.Logger {
 	return logger
 }
 
+func startMetricsServer(port string, logger *slog.Logger, reg *prometheus.Registry) *http.Server {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+
+	addr := ":" + port
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	go func() {
+		logger.Info("Starting metrics server", "addr", addr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("Metrics server failure", "error", err)
+		}
+	}()
+
+	return srv
+}
+
 func initDatabase(cfg config.DatabaseConfig, logger *slog.Logger) (*sql.DB, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -148,11 +183,11 @@ func initDatabase(cfg config.DatabaseConfig, logger *slog.Logger) (*sql.DB, erro
 	return db, nil
 }
 
-func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) (*engine.Pipeline, *dispatcher.Dispatcher) {
+func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger, metrics *telemetry.Metrics) (*engine.Pipeline, *dispatcher.Dispatcher) {
 	ruleRepo := postgres.NewRuleRepo(db)
 	sourceRepo := postgres.NewSourceRepo(db)
-	evaluator := engine.NewEvaluator(ruleRepo, sourceRepo, logger)
-	pipeline := engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, evaluator, logger)
+	evaluator := engine.NewEvaluator(ruleRepo, sourceRepo, logger, metrics)
+	pipeline := engine.New(cfg.Engine.WorkerCount, cfg.Engine.EventBufferSize, evaluator, logger, metrics)
 
 	// Wire dispatcher to receive matched events from the pipeline
 	matchCh := make(chan *domain.MatchedEvent, 256)
@@ -165,12 +200,12 @@ func setupPipeline(cfg *config.Config, db *sql.DB, logger *slog.Logger) (*engine
 	registry.Register("discord", sinks.NewDiscordSink(httpClient))
 
 	auditLogRepo := postgres.NewAuditLogRepo(db)
-	disp := dispatcher.New(matchCh, 4, registry, auditLogRepo, logger)
+	disp := dispatcher.New(matchCh, 4, registry, auditLogRepo, logger, metrics)
 
 	return pipeline, disp
 }
 
-func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.Pipeline, db *sql.DB) (string, *http.Server) {
+func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.Pipeline, db *sql.DB, metrics *telemetry.Metrics) (string, *http.Server) {
 	srv := ingestor.NewServer(logger, pipeline)
 
 	path, handler := protov1connect.NewIngestorServiceHandler(srv)
@@ -196,7 +231,7 @@ func setupHTTPServer(cfg *config.Config, logger *slog.Logger, pipeline *engine.P
 
 	// REST Gateway for webhook ingestion
 	sourceRepo := postgres.NewSourceRepo(db)
-	gw := gateway.NewGateway(logger, pipeline, sourceRepo)
+	gw := gateway.NewGateway(logger, pipeline, sourceRepo, metrics)
 	mux.HandleFunc("POST /v1/events", gw.HandleIngestEvent)
 
 	serverAddr := ":" + cfg.Port

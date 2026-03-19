@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/Grainbox/zenith/internal/domain"
+	"github.com/Grainbox/zenith/internal/telemetry"
 )
 
 // ErrPipelineFull is returned when the event buffer is at capacity.
@@ -20,17 +21,19 @@ type Pipeline struct {
 	workerCount int
 	evaluator   *Evaluator
 	logger      *slog.Logger
+	metrics     *telemetry.Metrics
 	wg          sync.WaitGroup
 }
 
 // New creates a new Pipeline with the given worker count, buffer size, and evaluator.
-func New(workerCount, bufferSize int, evaluator *Evaluator, logger *slog.Logger) *Pipeline {
+func New(workerCount, bufferSize int, evaluator *Evaluator, logger *slog.Logger, metrics *telemetry.Metrics) *Pipeline {
 	return &Pipeline{
 		eventCh:     make(chan *domain.Event, bufferSize),
 		dispatchCh:  nil,
 		workerCount: workerCount,
 		evaluator:   evaluator,
 		logger:      logger,
+		metrics:     metrics,
 	}
 }
 
@@ -53,6 +56,7 @@ func (p *Pipeline) Start(ctx context.Context) {
 func (p *Pipeline) Enqueue(event *domain.Event) error {
 	select {
 	case p.eventCh <- event:
+		p.metrics.SetWorkerQueueDepth(len(p.eventCh))
 		return nil
 	default:
 		return ErrPipelineFull

@@ -71,7 +71,7 @@ Add a `/metrics` endpoint exposing real-time processing statistics in Prometheus
 - All 9 metrics listed above are present in the response (even if zero-valued at startup).
 - Unit test: send a mock event through the gateway and assert that `zenith_events_received_total` incremented using `testutil.ToFloat64(counter)`.
 
-**Status:** [ ] Pending
+**Status:** [x] Completed
 
 ---
 

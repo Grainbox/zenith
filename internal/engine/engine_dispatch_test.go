@@ -45,8 +45,8 @@ func TestPipelineDispatch(t *testing.T) {
 		},
 	}
 
-	evaluator := NewEvaluator(ruleRepo, sourceRepo, logger)
-	pipeline := New(1, 10, evaluator, logger)
+	evaluator := NewEvaluator(ruleRepo, sourceRepo, logger, nil)
+	pipeline := New(1, 10, evaluator, logger, nil)
 
 	// Wire dispatcher
 	dispatchCh := make(chan *domain.MatchedEvent, 10)
@@ -117,8 +117,8 @@ func TestPipelineDispatchChannelFull(t *testing.T) {
 		},
 	}
 
-	evaluator := NewEvaluator(ruleRepo, sourceRepo, logger)
-	pipeline := New(1, 10, evaluator, logger)
+	evaluator := NewEvaluator(ruleRepo, sourceRepo, logger, nil)
+	pipeline := New(1, 10, evaluator, logger, nil)
 
 	// Wire a small dispatch channel to test backpressure
 	dispatchCh := make(chan *domain.MatchedEvent, 1)

@@ -65,7 +65,7 @@ func run() error {
 	registry.Register("discord", sinks.NewDiscordSink(httpClient))
 
 	auditLogRepo := postgres.NewAuditLogRepo(db)
-	d := dispatcher.New(matchCh, 4, registry, auditLogRepo, logger)
+	d := dispatcher.New(matchCh, 4, registry, auditLogRepo, logger, nil)
 	d.Start(context.Background())
 
 	serverAddr := ":" + cfg.Port

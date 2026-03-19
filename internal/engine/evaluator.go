@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/Grainbox/zenith/internal/domain"
 	"github.com/Grainbox/zenith/internal/repository"
+	"github.com/Grainbox/zenith/internal/telemetry"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -17,14 +19,16 @@ type Evaluator struct {
 	ruleRepo   repository.RuleRepository
 	sourceRepo repository.SourceRepository
 	logger     *slog.Logger
+	metrics    *telemetry.Metrics
 }
 
 // NewEvaluator creates a new Evaluator.
-func NewEvaluator(ruleRepo repository.RuleRepository, sourceRepo repository.SourceRepository, logger *slog.Logger) *Evaluator {
+func NewEvaluator(ruleRepo repository.RuleRepository, sourceRepo repository.SourceRepository, logger *slog.Logger, metrics *telemetry.Metrics) *Evaluator {
 	return &Evaluator{
 		ruleRepo:   ruleRepo,
 		sourceRepo: sourceRepo,
 		logger:     logger,
+		metrics:    metrics,
 	}
 }
 
@@ -34,6 +38,8 @@ func (e *Evaluator) Evaluate(ctx context.Context, event *domain.Event) ([]*domai
 	tracer := otel.Tracer("zenith/engine")
 	ctx, span := tracer.Start(ctx, "engine.evaluate_rules")
 	defer span.End()
+
+	start := time.Now()
 
 	// Resolve source name to UUID
 	source, err := e.sourceRepo.GetByName(ctx, event.Source)
@@ -89,6 +95,13 @@ func (e *Evaluator) Evaluate(ctx context.Context, event *domain.Event) ([]*domai
 		attribute.Int("rules.total", len(rules)),
 		attribute.Int("rules.matched", len(matched)),
 	)
+
+	// Record metrics
+	e.metrics.IncRulesEvaluated(event.Source)
+	for _, rule := range matched {
+		e.metrics.IncRulesMatched(event.Source, rule.ID.String())
+	}
+	e.metrics.ObserveRuleEvalDuration(time.Since(start))
 
 	if len(matched) == 0 {
 		e.logger.Debug("No rules matched",

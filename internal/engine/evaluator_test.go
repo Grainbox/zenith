@@ -355,7 +355,7 @@ func TestEvaluator_Evaluate_MultipleRules(t *testing.T) {
 	ruleRepo := NewMockRuleRepository()
 	ruleRepo.AddRules(sourceID, rules)
 
-	evaluator := NewEvaluator(ruleRepo, srcRepo, logger)
+	evaluator := NewEvaluator(ruleRepo, srcRepo, logger, nil)
 
 	eventPayload, err := json.Marshal(map[string]interface{}{
 		"amount": 750.0,
@@ -382,7 +382,7 @@ func TestEvaluator_Evaluate_UnknownSource(t *testing.T) {
 	srcRepo := NewMockSourceRepository() // vide, aucune source enregistrée
 	ruleRepo := NewMockRuleRepository()
 
-	evaluator := NewEvaluator(ruleRepo, srcRepo, logger)
+	evaluator := NewEvaluator(ruleRepo, srcRepo, logger, nil)
 
 	event := &domain.Event{
 		ID:      "evt_unknown",
@@ -429,7 +429,7 @@ func TestEvaluator_Evaluate_InactiveRuleSkipped(t *testing.T) {
 	ruleRepo := NewMockRuleRepository()
 	ruleRepo.AddRules(sourceID, rules)
 
-	evaluator := NewEvaluator(ruleRepo, srcRepo, logger)
+	evaluator := NewEvaluator(ruleRepo, srcRepo, logger, nil)
 
 	eventPayload, err := json.Marshal(map[string]interface{}{"amount": 100.0})
 	require.NoError(t, err)
@@ -460,7 +460,7 @@ func TestEvaluator_Evaluate_InvalidPayload(t *testing.T) {
 
 	ruleRepo := NewMockRuleRepository()
 
-	evaluator := NewEvaluator(ruleRepo, srcRepo, logger)
+	evaluator := NewEvaluator(ruleRepo, srcRepo, logger, nil)
 
 	event := &domain.Event{
 		ID:      "evt_invalid",
