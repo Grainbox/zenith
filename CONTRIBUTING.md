@@ -1,65 +1,131 @@
-# Contributing to ZENITH
+# Contributing to Zenith
 
-Thank you for your interest in contributing to **ZENITH**, the Distributed Event Observer. To maintain a high standard of quality ("Consultant-Grade"), please follow these guidelines.
+Thank you for your interest in contributing to **Zenith**, a distributed event observer for high-throughput event routing. To maintain production-quality code, please follow these guidelines.
 
-## 🛠 Prerequisites
+## Prerequisites
 
-- **Go:** 1.26+ (must match `go.mod` version)
-- **Linter:** [golangci-lint](https://golangci-lint.run/usage/install/) v1.62.0+
-- **Protocol Buffers:** `buf` CLI (for code generation)
-- **Docker:** Required for integration tests (`testcontainers-go`)
+- **Go 1.26+** (must match `go.mod`)
+- **Docker** (required for integration tests with `testcontainers-go`)
+- **golangci-lint** v1.62+ (linting)
+- **buf** CLI (protobuf code generation)
+- **golang-migrate** (database migrations)
 
-## 📁 Project Structure
+## Project Structure
 
 We follow the [Standard Go Project Layout](https://github.com/golang-standards/project-layout):
-- `/cmd/`: Main applications (entry points).
-- `/internal/`: Private library code (packages not for external use).
-- `/pkg/`: Public library code (can be used by other projects).
-- `/api/`: API definitions (Protobuf files).
-- `/docs/`: Documentation and roadmaps.
 
-## 🛡 Quality Standards
+- `/cmd/` — Main applications: `ingestor`, `dispatcher`, `load-generator`
+- `/internal/` — Private packages: config, domain, engine, gateway, ingestor, dispatcher, repository, storage, telemetry
+- `/pkg/pb/` — Auto-generated protobuf code (do NOT edit manually)
+- `/api/proto/` — Protobuf source files (`.proto`)
+- `/deployments/` — Infrastructure: Terraform (GCP), Kubernetes manifests, Grafana, migrations
+- `/docs/` — User documentation and roadmaps
 
-### Linting
-Before submitting a PR, you **must** ensure your code passes the linter. We use strict rules defined in `.golangci.yml`.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture.
 
-To run the linter locally:
-```powershell
-golangci-lint run
+## Code Standards
+
+### Linting (Required)
+
+All code must pass linting before commit:
+
+```bash
+golangci-lint run  # All linters in .golangci.yml
+buf lint           # Protocol buffers
 ```
+
+Linters enforce:
+- Error handling (`errcheck`) — all errors must be handled or explicitly ignored
+- Security (`gosec`) — no SQL injection, unsafe crypto, etc.
+- Static analysis (`staticcheck`, `revive`)
+- Race conditions (`-race` detector)
 
 ### Logging
-Do **not** use `fmt.Print` or `fmt.Println` for logging. Use the structured logger `log/slog`.
+
+Use `log/slog` for all logging:
+
 ```go
-slog.Info("Something happened", "key", value)
+slog.Info("Event processed", "event_id", eventID, "source", source)
+slog.Warn("Rule evaluation slow", "duration_ms", latency)
+slog.Error("Dispatch failed", "error", err, "sink", sinkType)
 ```
 
-## 🧪 Testing
+Never use `fmt.Print*` or `log.Println`.
+
+### Testing
 
 Run all tests before committing:
-```powershell
-go test ./...
+
+```bash
+go test ./...                    # All tests
+go test -race ./...             # Detect race conditions
+go test -short ./...            # Quick tests (skips integration)
+go test -v ./internal/gateway   # Specific package
 ```
 
-## 📜 Development Workflow
+Integration tests in `internal/repository/postgres/` require Docker. They use `testcontainers-go` to spin up a real CockroachDB instance.
 
-1.  Pick an issue from the [Roadmap](docs/organization/PHASE3_ROADMAP.md).
-2.  Follow the 12-Factor App principles.
-3.  Ensure your code is documented with proper Go comments.
-4.  Run tests locally before pushing:
-    ```bash
-    go test ./...
-    golangci-lint run
-    buf lint
-    ```
+### Concurrency
 
-## 🔄 Continuous Integration
+- Use **channels** and **goroutines** for concurrency (no shared state)
+- Avoid **mutex locks** where possible
+- All long-running goroutines must respect context cancellation
 
-All pushes to `main` trigger GitHub Actions (`.github/workflows/deploy.yml`):
+## Development Workflow
 
-- **Pull Requests:** Lint + Test only (no deployment)
-- **Push to main:** Full pipeline (lint → test → build → push → deploy)
+### Before Pushing
 
-The pipeline uses **Workload Identity Federation** for secure GCP authentication (no long-lived secrets stored).
+1. **Run all linters:**
+   ```bash
+   golangci-lint run
+   buf lint
+   ```
 
-See [Issue-502 plan](docs/organization/plans/ISSUE_502_CICD.md) for setup details.
+2. **Run all tests (including integration):**
+   ```bash
+   go test -race ./...
+   ```
+
+3. **Commit with a clear message:**
+   ```bash
+   git commit -m "feat: add tracing to dispatcher
+
+   - Instrument dispatch with OTel spans
+   - Add span attributes: sink_type, rule_id
+   - Mark span as error on dispatch failure"
+   ```
+
+### Picking a Task
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for current phase status. Open issues are tracked in the GitHub repo.
+
+### 12-Factor App Principles
+
+- All configuration from environment variables (see [docs/CONFIGURATION.md](docs/CONFIGURATION.md))
+- No hardcoded secrets or config files
+- Graceful shutdown on SIGTERM
+- Stateless design (all state in CockroachDB)
+
+### Documentation
+
+- Write Go doc comments for all public functions
+- Update [docs/](docs/) if you change architecture or add features
+- Link to relevant issues/PRs in commit messages
+
+## Continuous Integration
+
+All pushes trigger GitHub Actions (`.github/workflows/deploy.yml`):
+
+| Trigger | Stages | Notes |
+|---|---|---|
+| **Pull Request** | Lint → Test | No deployment |
+| **Push to main** | Lint → Test → Build → Push → Deploy | Auto-deploy to Cloud Run |
+
+The pipeline uses **Workload Identity Federation** for secure GCP auth (no long-lived secrets in repo).
+
+## Need Help?
+
+- **Getting started?** See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- **API questions?** See [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
+- **Architecture?** See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- **Development tips?** See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
