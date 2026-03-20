@@ -1,6 +1,6 @@
-# 🚀 Roadmap: From Student to Cloud-Native Consultant (8-Week Sprint)
+# 🚀 Roadmap: From Student to Cloud-Native Consultant
 
-## PHASE 1: Foundations & Software Design (Weeks 1 & 2)
+## PHASE 1: Foundations & Software Design
 
 *Goal: Shift from "scripting" to "software architecture" and master the Go ecosystem.*
 
@@ -17,7 +17,7 @@
 
 ---
 
-## PHASE 2: Persistence & Distributed Logic (Weeks 3 & 4)
+## PHASE 2: Persistence & Distributed Logic
 
 *Goal: Connect the "Brain" (Rule Engine) to "Memory" (CockroachDB) while handling concurrency.*
 
@@ -34,7 +34,7 @@
 
 ---
 
-## PHASE 3: Infrastructure as Code & Cloud (Weeks 5 & 6)
+## PHASE 3: Infrastructure as Code & Cloud
 
 *Goal: Become "Cloud-Native" by automating the entire infrastructure lifecycle.*
 
@@ -53,7 +53,7 @@
 
 ---
 
-## PHASE 4: Observability & Certification Final (Weeks 7 & 8)
+## PHASE 4: Observability & Certification Final
 
 *Goal: Polish the "Marketable" product and secure the industry-standard credential.*
 
@@ -70,7 +70,7 @@
 
 ---
 
-## PHASE 5: Microservice Decomposition (Future)
+## PHASE 5: Microservice Decomposition
 
 *Goal: Achieve true independent scaling of each pipeline layer.*
 
@@ -88,6 +88,5 @@
 
 ## 💡 Critical Success Factors:
 
-1.  **Week 4 Deadline:** The core Go logic must be finished. If behind, simplify rule types, but do not sacrifice code quality.
-2.  **The "Terraform" Rule:** Never create resources manually in the Cloud Console. If it’s not in Terraform, it doesn’t exist.
-3.  **Muscle Memory:** Spend 30 minutes every day on `kubectl` imperative commands. Speed is the biggest challenge for the CKAD exam.
+1.  **The "Terraform" Rule:** Never create resources manually in the Cloud Console. If it’s not in Terraform, it doesn’t exist.
+2.  **Muscle Memory:** Spend 30 minutes every day on `kubectl` imperative commands. Speed is the biggest challenge for the CKAD exam.

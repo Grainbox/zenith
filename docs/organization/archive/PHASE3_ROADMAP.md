@@ -1,10 +1,10 @@
-# 🚀 Detailed Roadmap: Phase 3 - ZENITH (Weeks 5 & 6)
+# 🚀 Detailed Roadmap: Phase 3 - ZENITH
 
 **Global Objective:** Become "Cloud-Native" by automating the entire infrastructure lifecycle. Implement the Dispatcher service and expose Zenith on a public URL. Master Kubernetes workload management and zero-downtime deployments.
 
 ---
 
-## 🏃 Sprint 5: Infrastructure as Code & CI/CD (Week 5)
+## 🏃 Sprint 5: Infrastructure as Code & CI/CD
 
 **Sprint Goal:** Provision cloud infrastructure with Terraform and automate deployments via GitHub Actions. Add a REST gateway to accept standard webhooks alongside the existing gRPC interface.
 
@@ -42,7 +42,7 @@
 
 ---
 
-## 🏃 Sprint 6: The Dispatcher & Cloud Deployment (Week 6)
+## 🏃 Sprint 6: The Dispatcher & Cloud Deployment
 
 **Sprint Goal:** Implement the Dispatcher binary, integrate external sinks, and validate the full end-to-end pipeline running live on the cloud with automated deployments.
 

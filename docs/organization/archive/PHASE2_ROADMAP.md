@@ -1,10 +1,10 @@
-# 🚀 Detailed Roadmap: Phase 2 - ZENITH (Weeks 3 & 4)
+# 🚀 Detailed Roadmap: Phase 2 - ZENITH
 
 **Global Objective:** Connect the "Brain" (Rule Engine) to "Memory" (CockroachDB) while handling high concurrency efficiently. Master Kubernetes storage and configuration.
 
 ---
 
-## 🏃 Sprint 3: Persistence & Rule Management (Week 3)
+## 🏃 Sprint 3: Persistence & Rule Management
 
 **Sprint Goal:** Provision CockroachDB, establish a connection from the Go application, and implement CRUD operations for the dynamic rules. Configure the Kubernetes environment for secrets and config injection.
 
@@ -47,7 +47,7 @@
 
 ---
 
-## 🏃 Sprint 4: The Rule Engine & Concurrency (Week 4)
+## 🏃 Sprint 4: The Rule Engine & Concurrency
 
 **Sprint Goal:** Build the core logic that evaluates incoming events against the database rules without blocking ingestion. Master Go's concurrency model and Kubernetes persistence.
 

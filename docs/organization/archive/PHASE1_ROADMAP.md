@@ -1,10 +1,10 @@
-# 🚀 Detailed Roadmap: Phase 1 - ZENITH (Weeks 1 & 2)
+# 🚀 Detailed Roadmap: Phase 1 - ZENITH
 
 **Global Objective:** Shift from "scripting" to "software architecture" and master the Go ecosystem. Lay the foundations for a "Consultant-Grade" Cloud-Native project.
 
 ---
 
-## 🏃 Sprint 1: Project Foundations & Interface Contracts (Week 1)
+## 🏃 Sprint 1: Project Foundations & Interface Contracts
 
 **Sprint Goal:** Initialize the Go project correctly (Standard Layout), configure high-quality tooling, and define gRPC/Protobuf contracts.
 
@@ -49,7 +49,7 @@
 
 ---
 
-## 🏃 Sprint 2: gRPC Skeleton & Basic K8s Deployment (Week 2)
+## 🏃 Sprint 2: gRPC Skeleton & Basic K8s Deployment
 
 **Sprint Goal:** Implement the gRPC server capable of receiving a "ping" and deploy this server on the local Kubernetes cluster.
 

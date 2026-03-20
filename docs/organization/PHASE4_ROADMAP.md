@@ -1,10 +1,10 @@
-# 🚀 Detailed Roadmap: Phase 4 — ZENITH (Weeks 7 & 8)
+# 🚀 Detailed Roadmap: Phase 4 — ZENITH
 
 **Global Objective:** Polish Zenith into a "Production-Ready" portfolio project. Integrate full observability (OpenTelemetry traces + Prometheus metrics), write professional documentation with architecture diagrams and a performance benchmark, clean up the GitHub repository to consultant-grade standards, and sit the CKAD certification exam.
 
 ---
 
-## 🏃 Sprint 7: Observability & Telemetry (Week 7)
+## 🏃 Sprint 7: Observability & Telemetry
 
 **Sprint Goal:** Instrument every layer of the pipeline with distributed tracing (OpenTelemetry) and expose real-time metrics (Prometheus). By the end of the sprint, a single event should be traceable from ingestion through rule evaluation to dispatch — all visible in a live dashboard.
 
@@ -146,7 +146,7 @@ metrics:
 
 ---
 
-## 🏃 Sprint 8: Portfolio Polish & CKAD Certification (Week 8)
+## 🏃 Sprint 8: Portfolio Polish & CKAD Certification
 
 **Sprint Goal:** Transform the GitHub repository into a professional, self-contained portfolio artifact. Write comprehensive documentation (README, architecture diagrams, benchmark report). Pass the CKAD certification exam.
 
@@ -183,7 +183,7 @@ Write a comprehensive `README.md` at the repository root that serves as both a t
 - `docs/assets/architecture-diagram.png` (exported from Mermaid or drawn with Excalidraw).
 - All Mermaid diagrams render correctly on GitHub (test in a branch preview).
 
-**Status:** [ ] Pending
+**Status:** [x] Completed
 
 ---
 
@@ -313,7 +313,7 @@ Structured preparation sprint for the CKAD (Certified Kubernetes Application Dev
 - [ ] NetworkPolicy: restrict inter-pod traffic to `zenith-dev` namespace only.
 
 **Killer.sh plan:**
-- Attempt #1 (Day 1 of Week 8): baseline score, identify weak domains.
+- Attempt #1: baseline score, identify weak domains.
 - Targeted practice (Days 2–4): drill weak domains using `kubectl` imperatively.
 - Attempt #2 (Day 5): target 90%+.
 - **Exam (Day 6 or 7):** Book via Linux Foundation portal.

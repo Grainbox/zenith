@@ -1,10 +1,10 @@
 # Zenith — Event Routing Middleware
 
-[![Go Version](https://img.shields.io/badge/go-1.26+-blue.svg)](https://golang.org/doc/devel/release.html)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green.svg)](https://github.com/Grainbox/zenith/actions)
+[![Build Status](https://github.com/Grainbox/zenith/actions/workflows/deploy.yml/badge.svg)](https://github.com/Grainbox/zenith/actions/workflows/deploy.yml)
+[![Go Version](https://img.shields.io/badge/go-1.26.1-blue.svg)](https://golang.org/doc/devel/release.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Route events from any source to any target based on business rules stored in the database — without touching your application code.
+> **Route events from any source to any target based on business rules stored in the database — without touching your application code.**
 
 ---
 
@@ -48,43 +48,49 @@ VALUES (..., 'vip-customer-alert', '{"field":"user_tier","operator":"==","value"
 
 No code change. No deploy. The rule is active immediately.
 
-### How It Differs from Zapier / n8n
-
-Zapier and n8n are no-code SaaS tools for connecting consumer applications (Gmail → Notion, Stripe → Slack). They are designed for low-frequency, user-triggered workflows and cannot handle high-throughput backend event streams.
-
-Zenith is backend infrastructure, embedded in your own architecture:
-- Handles **millions of events/hour** via gRPC with a concurrent worker pool
-- Rules are managed **programmatically** (SQL/API), not via a UI
-- **Self-hosted** in your Kubernetes cluster — no per-action cost, no vendor lock-in
-- **Sub-millisecond routing decisions** using in-process Go channels
-
 ---
 
 ## Architecture
 
-Zenith is a three-layer pipeline.
+### Local Pipeline
 
+```mermaid
+flowchart LR
+    Client["Client<br/>(HTTP/gRPC)"]
+    GW["Gateway<br/>POST /v1/events"]
+    Engine["Rule Engine<br/>(goroutine pool)"]
+    Dispatcher["Dispatcher<br/>(worker pool)"]
+    DB[("CockroachDB<br/>rules + audit_logs")]
+    Sinks["Sinks<br/>(Discord / Webhook / S3)"]
+
+    Client -->|"X-Api-Key + JSON"| GW
+    GW -->|"domain.Event (channel)"| Engine
+    Engine -->|"reads rules"| DB
+    Engine -->|"matched events (channel)"| Dispatcher
+    Dispatcher -->|"dispatch"| Sinks
+    Dispatcher -->|"write audit_log"| DB
 ```
-[Client] --gRPC--> [Ingestor] --channel--> [Rule Engine] --matched rules--> [Dispatcher]
-                       |                        |                                  |
-                  (ConnectRPC)           (CockroachDB)                   (Slack/webhooks/S3)
+
+### Cloud Deployment (GCP)
+
+```mermaid
+flowchart LR
+    Internet["Internet<br/>Clients"]
+    CR_I["Cloud Run<br/>Ingestor"]
+    CR_D["Cloud Run<br/>Dispatcher"]
+    CRDB["CockroachDB<br/>Serverless"]
+    Sinks["External Sinks<br/>(Discord, Webhooks)"]
+
+    Internet -->|"REST/gRPC"| CR_I
+    CR_I -->|"matched events"| CR_D
+    CR_I -->|"read rules"| CRDB
+    CR_D -->|"write audit logs"| CRDB
+    CR_D --> Sinks
 ```
 
-| Layer | Location | Deployment | Status |
-|---|---|---|---|
-| **Ingestor** — Receives events via gRPC, enqueues to worker pool | `cmd/ingestor/` | Standalone binary | ✅ Complete |
-| **Rule Engine** — Evaluates events against rules from CockroachDB | `internal/engine/` | Embedded in Ingestor process (in-process channel) | ✅ Complete |
-| **Dispatcher** — Routes matched events to external sinks, writes audit logs | `cmd/dispatcher/` | Standalone binary | ✅ Sprint 6 |
+**Supporting GCP Services:** Artifact Registry (images), Secret Manager (credentials), Cloud Trace (tracing), Managed Prometheus (metrics), Workload Identity (auth).
 
-> **Note:** In local development, the Ingestor and Dispatcher communicate via an in-memory Go channel (phase 2). For independent scaling in production, a message broker (Kafka/NATS) will replace the channel (Phase 3).
-
-### Domain Model
-
-- **Source** — An event producer identified by name and API key. Rules are scoped to a source.
-- **Rule** — A condition (`field`, `operator`, `value`) linked to a source and a `target_action`. Stored as JSONB in CockroachDB.
-- **Event** — An inbound event with a `source` name, `event_type`, and a JSON `payload` evaluated against rules.
-
-Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both numeric and string payloads.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for domain model and design decisions.
 
 ---
 
@@ -92,10 +98,13 @@ Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both num
 
 | Phase | Goal | Status |
 |---|---|---|
-| **Phase 1** — Foundations | gRPC skeleton, proto contracts, linting, CI | ✅ Complete |
-| **Phase 2** — Persistence & Rule Engine | CockroachDB, rule evaluation, concurrency, graceful shutdown | ✅ Complete |
-| **Phase 3** — IaC & Cloud | Terraform, GitHub Actions CI/CD, Dispatcher service, REST gateway | 🔄 In Progress |
-| **Phase 4** — Observability | OpenTelemetry, Prometheus, CKAD certification | Upcoming |
+| **Phase 1** | Foundations (gRPC, proto, linting) | ✅ Complete |
+| **Phase 2** | Persistence (CockroachDB, Rule Engine) | ✅ Complete |
+| **Phase 3** | IaC & Cloud (Terraform, CI/CD, Dispatcher) | ✅ Complete |
+| **Phase 4** | Observability (OTel, Prometheus, Grafana) | ✅ Complete |
+| **Phase 5** | Message Broker (independent services) | 🔮 Planned |
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed plans.
 
 ---
 
@@ -103,214 +112,123 @@ Supported rule operators: `==`, `!=`, `>`, `>=`, `<`, `<=` — works on both num
 
 | Concern | Technology |
 |---|---|
-| Language | Go 1.26 |
-| RPC | ConnectRPC (gRPC + HTTP/2 via h2c) |
-| Protocol | Protocol Buffers v3 |
-| Database | CockroachDB Serverless (pgx/v5 driver, no ORM) |
-| Migrations | `golang-migrate` |
-| Testing | `testify` + `testcontainers-go` (real CockroachDB container) |
-| Logging | `log/slog` (structured JSON) |
-| Config | 12-Factor (env vars, `godotenv`) |
-| Local K8s | `kind` cluster |
-| Linting | `golangci-lint` |
+| **Language** | Go 1.26.1 |
+| **RPC** | ConnectRPC (gRPC + HTTP/2 via h2c) + REST gateway |
+| **Database** | CockroachDB Serverless (pgx/v5, no ORM) |
+| **Migrations** | `golang-migrate` |
+| **Tracing** | OpenTelemetry SDK + GCP Cloud Trace |
+| **Metrics** | Prometheus + GCP Managed Prometheus |
+| **Dashboard** | Grafana |
+| **Infrastructure** | Terraform (GCP Cloud Run, AR, Secret Manager) |
+| **CI/CD** | GitHub Actions (lint → test → build → deploy) |
+| **Kubernetes** | `kind` (local), HPA, probes, resource limits |
+| **Testing** | `testify` + `testcontainers-go` (real CockroachDB) |
+| **Linting** | `golangci-lint` v1.62 + `buf lint` |
+
+---
+
+## Key Features
+
+| Feature | Benefit |
+|---|---|
+| **Dynamic Rules** | Change routing logic without code redeploy (SQL INSERT) |
+| **High Throughput** | Handles millions of events/hour via goroutine worker pools |
+| **Distributed Tracing** | Every event traceable end-to-end (OTel → Cloud Trace) |
+| **Real-Time Metrics** | 9 Prometheus metrics for ingestion, evaluation, dispatch |
+| **Extensible Sinks** | Discord, webhooks, S3; easy to add more |
+| **Zero Event Loss** | Graceful shutdown drains in-flight events |
+| **Production Ready** | Kubernetes-native, CKAD-compliant, Cloud Run-ready |
+
+---
+
+## Quick Links
+
+| Topic | Link |
+|---|---|
+| **Quick Start** | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
+| **API Reference** | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) |
+| **Configuration** | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
+| **Architecture** | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| **Observability** | [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) |
+| **Development** | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) |
+| **Roadmap** | [docs/ROADMAP.md](docs/ROADMAP.md) |
+
+---
+
+## Observability
+
+Zenith is fully instrumented for production visibility:
+
+- **Distributed Tracing:** Every event traced from REST request → rule evaluation → dispatch
+- **Prometheus Metrics:** 9 metric families covering ingestion, evaluation, dispatch, queue depth
+- **Grafana Dashboard:** Pre-built dashboard with live pipeline visibility
+
+![Grafana Dashboard](docs/assets/grafana-dashboard.png)
+
+See [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) for setup and example queries.
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-
-- Go 1.26+
-- Docker (required for integration tests)
-- `grpcurl` (for manual testing)
-- `buf` CLI (for regenerating protobuf code)
-- `golangci-lint`
-
-### Configuration
-
-Create `.env.secrets` in the project root:
+### Local Development
 
 ```bash
-DATABASE_URL=postgresql://user:password@host/zenith?sslmode=require
-```
+# 1. Clone and set environment
+git clone https://github.com/Grainbox/zenith.git
+cd zenith
+export DATABASE_URL=postgresql://root:password@localhost:26257/zenith?sslmode=require
 
-Optional environment variables (with defaults):
-
-```bash
-PORT=8080
-ENGINE_WORKER_COUNT=10
-ENGINE_BUFFER_SIZE=1024
-DB_MAX_OPEN_CONNS=25
-DB_MAX_IDLE_CONNS=25
-API_KEY_SALT=
-```
-
-### Database Setup
-
-Apply migrations:
-
-```bash
+# 2. Run migrations
 make migrate-up
-```
 
-Seed a source and a rule to test evaluation:
-
-```sql
-BEGIN;
-
-INSERT INTO sources (name, api_key)
-VALUES ('my-service', 'my-api-key')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO rules (source_id, name, condition, target_action, is_active)
-SELECT id, 'high-value-alert',
-       '{"field":"amount","operator":">","value":100}'::jsonb,
-       'notify-finance', true
-FROM sources WHERE name = 'my-service'
-ON CONFLICT DO NOTHING;
-
-COMMIT;
-```
-
-### Running the Ingestor
-
-```bash
+# 3. Start ingestor
 go run cmd/ingestor/main.go
+
+# 4. Send event
+curl -X POST http://localhost:8080/v1/events \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: my-api-key" \
+  -d '{"event_id":"evt-001","event_type":"test","source":"my-service","payload":{"amount":250}}'
 ```
 
-Expected startup output:
+**Full guide:** [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
 
-```json
-{"level":"INFO","msg":"Database connected successfully"}
-{"level":"INFO","msg":"Event pipeline started","worker_count":10}
-{"level":"INFO","msg":"Starting Zenith Ingestor Server","addr":":8080"}
-```
-
-### Sending an Event
-
-The `payload` field is `bytes` in proto — it must be base64-encoded JSON.
+### Kubernetes (Kind)
 
 ```bash
-grpcurl -plaintext \
-  -d '{
-    "event": {
-      "event_id": "evt-001",
-      "event_type": "payment.completed",
-      "source": "my-service",
-      "payload": "eyJhbW91bnQiOjI1MCwiY3VycmVuY3kiOiJVU0QifQ=="
-    }
-  }' \
-  localhost:8080 \
-  proto.v1.IngestorService/IngestEvent
-```
-
-The payload above decodes to `{"amount":250,"currency":"USD"}`, which matches the `amount > 100` rule.
-
-Expected log trace:
-
-```json
-{"level":"INFO","msg":"Event Received","event_id":"evt-001","source":"my-service"}
-{"level":"INFO","msg":"Rules matched","event_id":"evt-001","source":"my-service","matched_count":1,"total_rules":1}
-{"level":"INFO","msg":"Event matched rules","worker_id":0,"event_id":"evt-001","matched_count":1}
-```
-
-### Graceful Shutdown
-
-Press `Ctrl+C` (or send `SIGTERM`). The server stops accepting new connections, drains all in-flight events through the worker pool, then exits.
-
-```json
-{"level":"INFO","msg":"Shutting down server...","signal":"interrupt"}
-{"level":"INFO","msg":"Event pipeline stopped cleanly"}
-{"level":"INFO","msg":"Database connection closed"}
-{"level":"INFO","msg":"Server exited properly"}
-```
-
----
-
-## Development
-
-```bash
-# Run all tests (requires Docker for integration tests)
-go test ./...
-
-# Run with race detector
-go test -race ./...
-
-# Lint
-golangci-lint run
-
-# Regenerate protobuf code
-make gen
-
-# Lint .proto files
-make lint
-
-# Tidy modules
-make tidy
-
-# Database migrations
-make migrate-up
-make migrate-down
-
-# Build and deploy to local Kind cluster
 make build-kind
+kubectl apply -f deployments/k8s/local/
+kubectl rollout status deployment/zenith-ingestor -n zenith-dev
 ```
 
 ---
 
 ## Continuous Deployment
 
-### GitHub Actions Pipeline
-
-Every push to `main` triggers an automated CI/CD pipeline (`.github/workflows/deploy.yml`):
+Every push to `main` triggers GitHub Actions:
 
 ```
-Push to main
-    ↓
-[Lint + Test] (pull requests run lint/test only)
-    ↓
-[Build & Push Docker Image] → Artifact Registry
-    ↓
-[Terraform Apply] → Deploy to Cloud Run
-    ↓
-[Output] → Service URL available
+Lint → Test → Build Docker Image → Push to Artifact Registry → Terraform Apply to Cloud Run
 ```
 
-**Pipeline Stages:**
-
-1. **Lint** — `golangci-lint` + `buf lint`
-2. **Test** — Unit tests (`go test -short`)
-3. **Build & Push** — Docker image to Google Artifact Registry (tag = git SHA)
-4. **Deploy** — `terraform apply` with updated `image_tag`
-
-**PR Behavior:** Pull requests only run lint & test (no deployment).
-
-**Setup:** Configure 4 GitHub Secrets (see [Issue-502 plan](docs/organization/plans/ISSUE_502_CICD.md)):
-- `GCP_PROJECT_ID`
-- `GCP_WORKLOAD_IDENTITY_PROVIDER`
-- `GCP_SERVICE_ACCOUNT`
-- `TF_BACKEND_BUCKET`
+Pull requests run lint & test only (no deployment). See `.github/workflows/deploy.yml` for details.
 
 ---
 
-## Project Structure
+## Contributing
 
-```
-cmd/
-  ingestor/         # Ingestor binary entry point
-api/
-  proto/v1/         # .proto source files (source of truth)
-internal/
-  config/           # Env-var config loading
-  domain/           # Core models: Source, Rule, Event, Condition
-  engine/           # Rule Engine: Pipeline, Worker, Evaluator
-  ingestor/         # gRPC handler (IngestorService)
-  repository/       # Repository interfaces
-  repository/postgres/  # CockroachDB implementations
-  storage/          # DB connection pool
-pkg/
-  pb/               # Auto-generated protobuf/ConnectRPC code (do not edit)
-deployments/
-  db/migrations/    # SQL migration files (golang-migrate)
-  k8s/local/        # Kubernetes manifests for local Kind cluster
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development environment setup
+- Code standards (linting, testing, error handling)
+- PR checklist
+
+---
+
+## License
+
+MIT — See [LICENSE](LICENSE) for details.
+
+---
+
+**Questions?** Check the [docs/](docs/) directory or open an [issue](https://github.com/Grainbox/zenith/issues).
