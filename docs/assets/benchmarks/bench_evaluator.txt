@@ -1,0 +1,48 @@
+goos: windows
+goarch: amd64
+pkg: github.com/Grainbox/zenith/internal/engine
+cpu: AMD Ryzen 9 5900X 12-Core Processor
+
+=== Pure Condition Evaluation (no JSON, no DB) ===
+
+BenchmarkEvaluateCondition_1Rule-24        	89048516	        13.88 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEvaluateCondition_1Rule-24        	88946209	        13.61 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEvaluateCondition_1Rule-24        	87821371	        13.25 ns/op	       0 B/op	       0 allocs/op
+Average: 13.58 ns/op
+
+BenchmarkEvaluateCondition_10Rules-24      	  791180	      1529 ns/op	    1584 B/op	      42 allocs/op
+BenchmarkEvaluateCondition_10Rules-24      	  857007	      1573 ns/op	    1584 B/op	      42 allocs/op
+BenchmarkEvaluateCondition_10Rules-24      	  699238	      1573 ns/op	    1584 B/op	      42 allocs/op
+Average: 1558 ns/op (156 ns/rule)
+
+BenchmarkEvaluateCondition_100Rules-24     	   94639	     14117 ns/op	   13464 B/op	     357 allocs/op
+BenchmarkEvaluateCondition_100Rules-24     	   80589	     14157 ns/op	   13464 B/op	     357 allocs/op
+BenchmarkEvaluateCondition_100Rules-24     	   86116	     13769 ns/op	   13464 B/op	     357 allocs/op
+Average: 14014 ns/op (140 ns/rule)
+
+=== Full Evaluator.Evaluate() (includes JSON parsing + mock repo lookup) ===
+
+BenchmarkEvaluator_Evaluate_1Rule-24       	  367435	      3253 ns/op	    1361 B/op	      30 allocs/op
+BenchmarkEvaluator_Evaluate_1Rule-24       	  373971	      3144 ns/op	    1361 B/op	      30 allocs/op
+BenchmarkEvaluator_Evaluate_1Rule-24       	  375088	      3180 ns/op	    1361 B/op	      30 allocs/op
+Average: 3192 ns/op
+
+BenchmarkEvaluator_Evaluate_10Rules-24     	  100626	     11781 ns/op	    4406 B/op	     123 allocs/op
+BenchmarkEvaluator_Evaluate_10Rules-24     	  103383	     11789 ns/op	    4406 B/op	     123 allocs/op
+BenchmarkEvaluator_Evaluate_10Rules-24     	  103138	     11730 ns/op	    4406 B/op	     123 allocs/op
+Average: 11767 ns/op (1177 ns/rule)
+
+BenchmarkEvaluator_Evaluate_100Rules-24    	   12037	     98610 ns/op	   36695 B/op	    1157 allocs/op
+BenchmarkEvaluator_Evaluate_100Rules-24    	   12058	     98743 ns/op	   36694 B/op	    1157 allocs/op
+BenchmarkEvaluator_Evaluate_100Rules-24    	   12099	     99243 ns/op	   36694 B/op	    1157 allocs/op
+Average: 98865 ns/op (989 ns/rule)
+
+=== Summary ===
+- Single condition eval: 13.6 ns (zero allocation)
+- 10 conditions: 1.6 µs (156 ns each)
+- 100 conditions: 14 µs (140 ns each)
+- Full Evaluate (1 rule): 3.2 µs (includes JSON unmarshal + repo lookup)
+- Full Evaluate (10 rules): 11.8 µs
+- Full Evaluate (100 rules): 98.9 µs
+
+Bottleneck: JSON unmarshaling and repo lookups dominate the per-event overhead, not condition evaluation.

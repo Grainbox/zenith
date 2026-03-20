@@ -155,6 +155,8 @@ make migrate-down
 
 ## Load Testing
 
+See [BENCHMARK.md](../BENCHMARK.md) for performance test results and bottleneck analysis.
+
 ### Using k6
 
 See [docs/load-test/README.md](../docs/load-test/README.md) for k6 load testing scripts.

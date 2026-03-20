@@ -231,7 +231,7 @@ Identify the limiting factor (DB read for rules, network to sink, CPU in evaluat
 - Raw `hey` / `k6` output committed in `docs/assets/benchmarks/`.
 - At least one `go test -bench` result block embedded in the doc.
 
-**Status:** [ ] Pending
+**Status:** [x] Completed
 
 ---
 

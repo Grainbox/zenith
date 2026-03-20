@@ -150,6 +150,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed plans.
 | **Configuration** | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
 | **Architecture** | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | **Observability** | [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) |
+| **Performance** | [BENCHMARK.md](docs/BENCHMARK.md) |
 | **Development** | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) |
 | **Roadmap** | [docs/ROADMAP.md](docs/ROADMAP.md) |
 

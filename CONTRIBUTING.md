@@ -60,10 +60,12 @@ Run all tests before committing:
 go test ./...                    # All tests
 go test -race ./...             # Detect race conditions
 go test -short ./...            # Quick tests (skips integration)
-go test -v ./internal/gateway   # Specific package
+go test -bench=. ./internal/engine  # Run micro-benchmarks
 ```
 
 Integration tests in `internal/repository/postgres/` require Docker. They use `testcontainers-go` to spin up a real CockroachDB instance.
+
+See [BENCHMARK.md](../BENCHMARK.md) for performance baselines and load-testing methodology.
 
 ### Concurrency
 

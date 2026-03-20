@@ -145,6 +145,7 @@ Potential enhancements:
 | Grafana dashboard committed | ✅ `deployments/grafana/zenith-dashboard.json` |
 | Architecture diagrams in README | ✅ Mermaid (local + cloud topology) |
 | Complete API documentation | ✅ All endpoints, error codes, examples |
+| Performance benchmark report | ✅ Go micro-benchmarks + load testing methodology |
 | Professional GitHub repository | ✅ Description, topics, README, CONTRIBUTING |
 | HPA configured and tested | ✅ Auto-scales Ingestor under load |
 | CKAD-ready Kubernetes manifests | ✅ Probes, resource limits, HPA |
